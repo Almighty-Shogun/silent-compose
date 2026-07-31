@@ -1,0 +1,6 @@
+option(
+  'gtk4_immodules_dir',
+  type: 'string',
+  value: '',
+  description: 'GTK 4 input method module install directory. Defaults to ${gtk4.pc:libdir}/gtk-4.0/immodules.',
+)

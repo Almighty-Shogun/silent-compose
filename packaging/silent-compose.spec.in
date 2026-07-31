@@ -1,0 +1,60 @@
+Name:           silent-compose
+Version:        @VERSION@
+Release:        @RPM_RELEASE@%{?dist}
+Summary:        Silent Compose input method for GTK 4 and IBus
+
+License:        MIT
+Source0:        silent-compose-%{version}.tar.xz
+
+BuildRequires:  gcc
+BuildRequires:  meson
+BuildRequires:  ninja-build
+BuildRequires:  pkgconfig(gio-2.0)
+BuildRequires:  pkgconfig(gtk4) >= 4.2
+BuildRequires:  pkgconfig(ibus-1.0) >= 1.5.0
+
+Requires:       ibus
+Requires:       gtk4%{?_isa}
+Requires(posttrans): glib2
+Requires(postun):    glib2
+Provides:       silent-compose-gtk4 = %{version}-%{release}
+Obsoletes:      silent-compose-gtk4 < %{version}-%{release}
+
+%description
+SilentCompose provides silent Windows-style US International composition. It
+includes a GTK 4 input-method module and an IBus engine named
+US, intl. Silent Compose. Pending accent keys are kept private and only final
+UTF-8 text is committed.
+
+%prep
+%autosetup -n silent-compose-%{version}
+
+%build
+export SC_VERSION=%{version}
+%meson
+%meson_build
+
+%install
+%meson_install
+
+%check
+%meson_test
+
+%posttrans
+%{_bindir}/gio-querymodules-%{__isa_bits} \
+    %{_libdir}/gtk-4.0/immodules || :
+
+%postun
+%{_bindir}/gio-querymodules-%{__isa_bits} \
+    %{_libdir}/gtk-4.0/immodules || :
+
+%files
+%license LICENSE
+%doc README.md
+%{_libexecdir}/silent-compose-ibus
+%{_libdir}/gtk-4.0/immodules/libsilent-compose.so
+%{_datadir}/ibus/component/org.freedesktop.IBus.SilentCompose.xml
+
+%changelog
+* @RPM_CHANGELOG_DATE@ SilentCompose contributors <silent-compose@localhost> - @VERSION@-@RPM_RELEASE@
+- Build Silent Compose release @VERSION@.

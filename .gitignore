@@ -1,0 +1,33 @@
+# Meson build directories
+/build/
+/buildDir/
+/builddir/
+/build-*/
+
+# Editor / IDE files
+/.idea/
+/.vscode/
+*.swp
+*~
+
+# Compiler and linker outputs
+*.o
+*.so
+*.so.*
+*.a
+
+# Local package/release artifacts
+*.rpm
+*.src.rpm
+*.tar.xz
+*.tar.gz
+*.zip
+/rpmbuild/
+/release-assets/
+/dist/
+
+# Local caches
+/.cache/
+/.pytest_cache/
+/coverage/
+*.log
