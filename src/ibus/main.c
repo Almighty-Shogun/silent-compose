@@ -38,6 +38,7 @@ int main(const int argc, char** argv)
     if (argc == 2 && argument_is_version(argv[1]))
     {
         g_print("Silent Compose %s\n", SC_VERSION);
+
         return 0;
     }
 
@@ -52,6 +53,7 @@ int main(const int argc, char** argv)
     {
         g_printerr("silent-compose-ibus: ibus-daemon is not available\n");
         g_clear_object(&bus);
+
         return 1;
     }
 
@@ -65,6 +67,7 @@ int main(const int argc, char** argv)
     if (request_name_reply == 0)
     {
         g_printerr("silent-compose-ibus: failed to request bus name %s\n", BUS_NAME);
+
         g_clear_object(&factory);
         g_clear_object(&bus);
 

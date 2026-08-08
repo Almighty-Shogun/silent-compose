@@ -24,8 +24,7 @@ typedef struct
     GtkIMContextClass parent_class G_GNUC_UNUSED;
 } ScIMContextClass;
 
-#define SC_IM_CONTEXT(obj) \
-    (G_TYPE_CHECK_INSTANCE_CAST((obj), SC_TYPE_IM_CONTEXT, ScIMContext))
+#define SC_IM_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), SC_TYPE_IM_CONTEXT, ScIMContext))
 
 enum
 {
@@ -149,24 +148,24 @@ static void set_property(GObject* object, const guint property_id,const GValue* 
 
     switch (property_id)
     {
-    case PROP_INPUT_PURPOSE:
-        self->input_purpose = g_value_get_enum(value);
+        case PROP_INPUT_PURPOSE:
+            self->input_purpose = g_value_get_enum(value);
 
-        if (self->delegate != NULL)
-            g_object_set(self->delegate, "input-purpose", self->input_purpose, NULL);
-
-        break;
-
-    case PROP_INPUT_HINTS:
-        self->input_hints = g_value_get_flags(value);
-
-        if (self->delegate != NULL)
-            g_object_set(self->delegate, "input-hints", self->input_hints, NULL);
+            if (self->delegate != NULL)
+                g_object_set(self->delegate, "input-purpose", self->input_purpose, NULL);
 
         break;
 
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+        case PROP_INPUT_HINTS:
+            self->input_hints = g_value_get_flags(value);
+
+            if (self->delegate != NULL)
+                g_object_set(self->delegate, "input-hints", self->input_hints, NULL);
+
+        break;
+
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
         break;
     }
 }
@@ -178,16 +177,16 @@ static void get_property(GObject* object, const guint property_id, GValue* value
 
     switch (property_id)
     {
-    case PROP_INPUT_PURPOSE:
-        g_value_set_enum(value, self->input_purpose);
+        case PROP_INPUT_PURPOSE:
+            g_value_set_enum(value, self->input_purpose);
         break;
 
-    case PROP_INPUT_HINTS:
-        g_value_set_flags(value, self->input_hints);
+        case PROP_INPUT_HINTS:
+            g_value_set_flags(value, self->input_hints);
         break;
 
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
         break;
     }
 }
