@@ -32,10 +32,13 @@ enum
     PROP_INPUT_HINTS,
 };
 
+/* GObject class initializer declared before the type-generation macro. */
 static void sc_im_context_class_init(ScIMContextClass* klass);
 #ifndef SC_STATIC_TYPE
+/* Dynamic-type class finalizer declared before the type-generation macro. */
 static void sc_im_context_class_finalize(ScIMContextClass* klass);
 #endif
+/* GObject instance initializer declared before the type-generation macro. */
 static void sc_im_context_init(ScIMContext* self);
 
 #ifdef SC_STATIC_TYPE
@@ -44,6 +47,7 @@ G_DEFINE_TYPE(ScIMContext, sc_im_context, GTK_TYPE_IM_CONTEXT)
 G_DEFINE_DYNAMIC_TYPE(ScIMContext, sc_im_context, GTK_TYPE_IM_CONTEXT)
 #endif
 
+/* Return TRUE when verbose GTK IM module logging was requested through the environment. */
 static gboolean debug_enabled(void)
 {
     const char* value = g_getenv("SILENT_COMPOSE_DEBUG");
@@ -88,7 +92,10 @@ static gboolean delegate_retrieve_surrounding_cb(GtkIMContext* delegate, void* c
 }
 
 /* Forward deletion requests from the delegate to the real client. */
-static gboolean delegate_delete_surrounding_cb(GtkIMContext* delegate, const int offset, const int n_chars, void* const user_data)
+static gboolean delegate_delete_surrounding_cb(GtkIMContext* delegate,
+                                               const int offset,
+                                               const int n_chars,
+                                               void* const user_data)
 {
     ScIMContext* self = SC_IM_CONTEXT(user_data);
     gboolean handled = FALSE;
@@ -142,7 +149,7 @@ static void connect_delegate(ScIMContext* self)
 }
 
 /* Keep overridden input-purpose/input-hints properties mirrored to the delegate. */
-static void set_property(GObject* object, const guint property_id,const GValue* value, GParamSpec* pspec)
+static void set_property(GObject* object, const guint property_id, const GValue* value, GParamSpec* pspec)
 {
     ScIMContext* self = SC_IM_CONTEXT(object);
 
@@ -206,7 +213,7 @@ static void dispose(GObject* object)
 }
 
 /* Forward client-widget ownership/state to GtkIMContextSimple. */
-static void  set_client_widget(GtkIMContext* context, GtkWidget* widget)
+static void set_client_widget(GtkIMContext* context, GtkWidget* widget)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
@@ -313,7 +320,11 @@ static gboolean get_surrounding(GtkIMContext* context, char** text, int* cursor_
 }
 
 /* Forward modern surrounding-text state to the delegate. */
-static void set_surrounding_with_selection(GtkIMContext* context, const char* text, const int len, const int cursor_index, const int anchor_index)
+static void set_surrounding_with_selection(GtkIMContext* context,
+                                           const char* text,
+                                           const int len,
+                                           const int cursor_index,
+                                           const int anchor_index)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
 

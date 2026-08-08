@@ -65,7 +65,39 @@ Unsupported printable sequences preserve input. Example: `'` then `t` commits
 
 ## Install / uninstall
 
-Download and install a release RPM:
+### COPR repository
+
+Install from the COPR repository:
+
+```bash
+sudo dnf install dnf-plugins-core
+sudo dnf copr enable almighty-shogun/silent-compose
+sudo dnf install silent-compose
+```
+
+Then updates arrive through normal Fedora package upgrades:
+
+```bash
+sudo dnf upgrade silent-compose
+```
+
+Regular system upgrades also update Silent Compose when a newer COPR build is
+available:
+
+```bash
+sudo dnf upgrade -y
+```
+
+After an update, restart the GNOME IBus user service or log out and back in so
+GNOME loads the updated engine process.
+
+```bash
+systemctl --user restart org.freedesktop.IBus.session.GNOME.service
+```
+
+### Github
+
+Download and install a release RPM directly:
 
 ```bash
 curl -LO "https://github.com/Almighty-Shogun/silent-compose/releases/latest/download/silent-compose.fc44.rpm"
