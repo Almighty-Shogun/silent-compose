@@ -26,6 +26,7 @@ typedef struct
 
 G_DEFINE_TYPE(ScEngine, sc_engine, IBUS_TYPE_ENGINE)
 
+/* Return TRUE when verbose engine logging was requested through the environment. */
 static gboolean debug_enabled(void)
 {
     const char* value = g_getenv("SILENT_COMPOSE_DEBUG");
@@ -85,6 +86,43 @@ static void commit_string(IBusEngine* engine, const char* str)
 }
 
 /*
+ * Build commit text for printable non-ASCII keysyms that ComposeState does not
+ * handle itself.  This covers Level-3/AltGr characters such as EuroSign from
+ * the advertised us(altgr-intl) layout while still letting shortcuts and normal
+ * ASCII input pass through to the application.
+ */
+gboolean sc_engine_make_passthrough_text(const guint keyval, const guint state, char* buffer, const gsize buffer_size)
+{
+    g_return_val_if_fail(buffer != NULL, FALSE);
+
+    if ((state & IBUS_RELEASE_MASK) != 0)
+        return FALSE;
+
+    if ((state & (IBUS_CONTROL_MASK | IBUS_SUPER_MASK | IBUS_MOD4_MASK)) != 0)
+        return FALSE;
+
+    if ((state & IBUS_MOD1_MASK) != 0 && (state & IBUS_MOD5_MASK) == 0)
+        return FALSE;
+
+    const gunichar ch = ibus_keyval_to_unicode(keyval);
+
+    if (ch < 0x80 || !g_unichar_validate(ch) || g_unichar_iscntrl(ch))
+        return FALSE;
+
+    char utf8[7] = {0};
+    const int len = g_unichar_to_utf8(ch, utf8);
+
+    utf8[len] = '\0';
+
+    if (len <= 0 || (gsize) len >= buffer_size)
+        return FALSE;
+
+    g_strlcpy(buffer, utf8, buffer_size);
+
+    return TRUE;
+}
+
+/*
  * IBus calls this for each key event.  Return TRUE only when the input method
  * consumed the key.  A handled result with commit == NULL means the key was an
  * accent, Escape, or Backspace that only affected private state.
@@ -95,6 +133,8 @@ static gboolean process_key_event(IBusEngine* engine, const guint keyval, const 
 
     ComposeResult result = compose_state_process_key(self->compose, keyval, translate_modifiers(state));
 
+    const gboolean pending = compose_state_is_pending(self->compose);
+
     if (self->debug)
     {
         g_debug("keyval=0x%x keycode=%u state=0x%x handled=%s commit=%s pending=%s",
@@ -103,13 +143,25 @@ static gboolean process_key_event(IBusEngine* engine, const guint keyval, const 
                 state,
                 result.handled ? "true" : "false",
                 result.commit != NULL ? "yes" : "no",
-                compose_state_is_pending (self->compose) ? "true" : "false");
+                pending ? "true" : "false");
     }
 
     const gboolean handled = result.handled;
 
     commit_string(engine, result.commit);
     compose_result_clear(&result);
+
+    if (!handled && !pending)
+    {
+        char passthrough[7] = {0};
+
+        if (sc_engine_make_passthrough_text(keyval, state, passthrough, sizeof passthrough))
+        {
+            commit_string(engine, passthrough);
+
+            return TRUE;
+        }
+    }
 
     return handled;
 }

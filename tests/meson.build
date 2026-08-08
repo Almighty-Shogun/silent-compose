@@ -40,6 +40,21 @@ test(
   ],
 )
 
+test_ibus_engine = executable(
+  'test-ibus-engine',
+  'test-ibus-engine.c',
+  '../src/ibus/engine.c',
+  link_with: compose_lib,
+  dependencies: [ibus_dep, gio_dep],
+  c_args: common_c_args,
+  include_directories: include_directories('../src/compose', '../src/ibus'),
+)
+
+test(
+  'silent-compose-ibus-engine',
+  test_ibus_engine,
+)
+
 test(
   'silent-compose-ibus-component',
   find_program('sh'),
