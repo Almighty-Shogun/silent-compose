@@ -4,300 +4,354 @@
 
 enum
 {
-  KEY_BACKSPACE = 0xff08,
-  KEY_ESCAPE = 0xff1b,
-  KEY_LEFT = 0xff51,
-  KEY_SHIFT_L = 0xffe1,
+    KEY_BACKSPACE = 0xff08,
+    KEY_ESCAPE = 0xff1b,
+    KEY_LEFT = 0xff51,
+    KEY_SHIFT_L = 0xffe1,
+    KEY_EURO_SIGN = 0x20ac,
 };
 
-static void
-assert_sequence (const char *label,
-                 guint       first,
-                 guint       second,
-                 const char *expected)
+static void assert_sequence(const char* label, const guint first, const guint second, const char* expected)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, first, 0);
-  g_assert_true (result.handled);
-  g_assert_null (result.commit);
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, first, 0);
 
-  result = compose_state_process_key (state, second, 0);
-  g_assert_true (result.handled);
-  g_assert_cmpstr (result.commit, ==, expected);
-  g_assert_false (compose_state_is_pending (state));
+    g_assert_true(result.handled);
+    g_assert_null(result.commit);
 
-  if (g_test_verbose ())
-    g_test_message ("%s -> %s", label, expected);
+    compose_result_clear(&result);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    result = compose_state_process_key(state, second, 0);
+
+    g_assert_true(result.handled);
+    g_assert_cmpstr(result.commit, ==, expected);
+    g_assert_false(compose_state_is_pending (state));
+
+    if (g_test_verbose())
+        g_message("%s -> %s", label, expected);
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_required_sequences (void)
+static void required_sequences(void)
 {
-  assert_sequence ("' + e", '\'', 'e', "é");
-  assert_sequence ("' + E", '\'', 'E', "É");
-  assert_sequence ("\" + u", '"', 'u', "ü");
-  assert_sequence ("\" + U", '"', 'U', "Ü");
-  assert_sequence ("` + a", '`', 'a', "à");
-  assert_sequence ("^ + o", '^', 'o', "ô");
-  assert_sequence ("~ + n", '~', 'n', "ñ");
-  assert_sequence ("' + c", '\'', 'c', "ç");
-  assert_sequence ("' + Space", '\'', ' ', "'");
-  assert_sequence ("\" + Space", '"', ' ', "\"");
-  assert_sequence ("` + Space", '`', ' ', "`");
-  assert_sequence ("^ + Space", '^', ' ', "^");
-  assert_sequence ("~ + Space", '~', ' ', "~");
+    assert_sequence("' + e", '\'', 'e', "é");
+    assert_sequence("' + E", '\'', 'E', "É");
+    assert_sequence("\" + u", '"', 'u', "ü");
+    assert_sequence("\" + U", '"', 'U', "Ü");
+    assert_sequence("` + a", '`', 'a', "à");
+    assert_sequence("^ + o", '^', 'o', "ô");
+    assert_sequence("~ + n", '~', 'n', "ñ");
+    assert_sequence("' + c", '\'', 'c', "ç");
+    assert_sequence("' + Space", '\'', ' ', "'");
+    assert_sequence("\" + Space", '"', ' ', "\"");
+    assert_sequence("` + Space", '`', ' ', "`");
+    assert_sequence("^ + Space", '^', ' ', "^");
+    assert_sequence("~ + Space", '~', ' ', "~");
 }
 
-static void
-test_repeated_accents (void)
+static void repeated_accents(void)
 {
-  assert_sequence ("' + '", '\'', '\'', "''");
-  assert_sequence ("\" + \"", '"', '"', "\"\"");
-  assert_sequence ("` + `", '`', '`', "``");
-  assert_sequence ("^ + ^", '^', '^', "^^");
-  assert_sequence ("~ + ~", '~', '~', "~~");
+    assert_sequence("' + '", '\'', '\'', "''");
+    assert_sequence("\" + \"", '"', '"', "\"\"");
+    assert_sequence("` + `", '`', '`', "``");
+    assert_sequence("^ + ^", '^', '^', "^^");
+    assert_sequence("~ + ~", '~', '~', "~~");
 }
 
-static void
-test_cancellation (void)
+static void cancellation(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '\'', 0);
-  g_assert_true (result.handled);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, '\'', 0);
 
-  result = compose_state_process_key (state, KEY_BACKSPACE, 0);
-  g_assert_true (result.handled);
-  g_assert_null (result.commit);
-  g_assert_false (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    g_assert_true(result.handled);
+    g_assert_true(compose_state_is_pending (state));
 
-  result = compose_state_process_key (state, '"', 0);
-  g_assert_true (result.handled);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    compose_result_clear(&result);
 
-  result = compose_state_process_key (state, KEY_ESCAPE, 0);
-  g_assert_true (result.handled);
-  g_assert_null (result.commit);
-  g_assert_false (compose_state_is_pending (state));
+    result = compose_state_process_key(state, KEY_BACKSPACE, 0);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    g_assert_true(result.handled);
+    g_assert_null(result.commit);
+    g_assert_false(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, '"', 0);
+
+    g_assert_true(result.handled);
+    g_assert_true(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, KEY_ESCAPE, 0);
+
+    g_assert_true(result.handled);
+    g_assert_null(result.commit);
+    g_assert_false(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_unsupported_sequence_fallback (void)
+static void unsupported_sequence_fallback(void)
 {
-  assert_sequence ("' + t", '\'', 't', "'t");
-  assert_sequence ("~ + x", '~', 'x', "~x");
+    assert_sequence("' + t", '\'', 't', "'t");
+    assert_sequence("~ + x", '~', 'x', "~x");
 }
 
-static void
-test_shortcuts_bypass (void)
+static void shortcuts_bypass(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, 'c', COMPOSE_MOD_CONTROL);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, 'c', COMPOSE_MOD_CONTROL);
 
-  result = compose_state_process_key (state, 'v', COMPOSE_MOD_ALT);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  compose_result_clear (&result);
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
 
-  result = compose_state_process_key (state, 'p', COMPOSE_MOD_CONTROL | COMPOSE_MOD_SHIFT);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  compose_result_clear (&result);
+    compose_result_clear(&result);
 
-  result = compose_state_process_key (state, 't', COMPOSE_MOD_SUPER);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
+    result = compose_state_process_key(state, 'v', COMPOSE_MOD_ALT);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, 'p', COMPOSE_MOD_CONTROL | COMPOSE_MOD_SHIFT);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, 't', COMPOSE_MOD_SUPER);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_shortcuts_bypass_while_pending (void)
+static void shortcuts_bypass_while_pending(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '\'', 0);
-  g_assert_true (result.handled);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, '\'', 0);
 
-  result = compose_state_process_key (state, 'c', COMPOSE_MOD_CONTROL);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    g_assert_true(result.handled);
+    g_assert_true(compose_state_is_pending (state));
 
-  result = compose_state_process_key (state, 'e', 0);
-  g_assert_true (result.handled);
-  g_assert_cmpstr (result.commit, ==, "é");
-  g_assert_false (compose_state_is_pending (state));
+    compose_result_clear(&result);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    result = compose_state_process_key(state, 'c', COMPOSE_MOD_CONTROL);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+    g_assert_true(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, 'e', 0);
+
+    g_assert_true(result.handled);
+    g_assert_cmpstr(result.commit, ==, "é");
+    g_assert_false(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_modifier_key_while_pending_is_ignored (void)
+static void modifier_key_while_pending_is_ignored(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '"', 0);
-  g_assert_true (result.handled);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, '"', 0);
 
-  result = compose_state_process_key (state, KEY_SHIFT_L, COMPOSE_MOD_SHIFT);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    g_assert_true(result.handled);
+    g_assert_true(compose_state_is_pending (state));
 
-  result = compose_state_process_key (state, 'U', COMPOSE_MOD_SHIFT);
-  g_assert_true (result.handled);
-  g_assert_cmpstr (result.commit, ==, "Ü");
-  g_assert_false (compose_state_is_pending (state));
+    compose_result_clear(&result);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    result = compose_state_process_key(state, KEY_SHIFT_L, COMPOSE_MOD_SHIFT);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+    g_assert_true(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, 'U', COMPOSE_MOD_SHIFT);
+
+    g_assert_true(result.handled);
+    g_assert_cmpstr(result.commit, ==, "Ü");
+    g_assert_false(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_plain_ascii_and_non_printable_bypass (void)
+static void plain_ascii_and_non_printable_bypass(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, 'a', 0);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, 'a', 0);
 
-  result = compose_state_process_key (state, KEY_SHIFT_L, COMPOSE_MOD_RELEASE);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  compose_result_clear (&result);
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
 
-  result = compose_state_process_key (state, KEY_LEFT, 0);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
+    compose_result_clear(&result);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    result = compose_state_process_key(state, KEY_SHIFT_L, COMPOSE_MOD_RELEASE);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, KEY_LEFT, 0);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_pending_release_event_is_ignored (void)
+static void level3_printable_bypass(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '\'', 0);
-  g_assert_true (result.handled);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, KEY_EURO_SIGN, 0);
 
-  result = compose_state_process_key (state, '\'', COMPOSE_MOD_RELEASE);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+    g_assert_false(compose_state_is_pending (state));
 
-  result = compose_state_process_key (state, 'e', 0);
-  g_assert_true (result.handled);
-  g_assert_cmpstr (result.commit, ==, "é");
+    compose_result_clear(&result);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    result = compose_state_process_key(state, KEY_EURO_SIGN, COMPOSE_MOD_ALT);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+    g_assert_false(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_pending_non_printable_commits_accent_and_bypasses_key (void)
+static void pending_release_event_is_ignored(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '\'', 0);
-  g_assert_true (result.handled);
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, '\'', 0);
 
-  result = compose_state_process_key (state, KEY_LEFT, 0);
-  g_assert_false (result.handled);
-  g_assert_cmpstr (result.commit, ==, "'");
-  g_assert_false (compose_state_is_pending (state));
+    g_assert_true(result.handled);
+    g_assert_true(compose_state_is_pending (state));
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, '\'', COMPOSE_MOD_RELEASE);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+    g_assert_true(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, 'e', 0);
+
+    g_assert_true(result.handled);
+    g_assert_cmpstr(result.commit, ==, "é");
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_focus_reset (void)
+static void pending_non_printable_commits_accent_and_bypasses_key(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '\'', 0);
-  g_assert_true (compose_state_is_pending (state));
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, '\'', 0);
 
-  compose_state_reset (state);
-  g_assert_false (compose_state_is_pending (state));
+    g_assert_true(result.handled);
 
-  result = compose_state_process_key (state, 'e', 0);
-  g_assert_false (result.handled);
-  g_assert_null (result.commit);
+    compose_result_clear(&result);
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    result = compose_state_process_key(state, KEY_LEFT, 0);
+
+    g_assert_false(result.handled);
+    g_assert_cmpstr(result.commit, ==, "'");
+    g_assert_false(compose_state_is_pending (state));
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-static void
-test_unicode_output_is_valid_utf8 (void)
+static void focus_reset(void)
 {
-  ComposeState *state = compose_state_new ();
+    ComposeState* state = compose_state_new();
 
-  ComposeResult result = compose_state_process_key (state, '~', 0);
-  g_assert_true (result.handled);
-  compose_result_clear (&result);
+    ComposeResult result = compose_state_process_key(state, '\'', 0);
 
-  result = compose_state_process_key (state, 'N', 0);
-  g_assert_true (result.handled);
-  g_assert_cmpstr (result.commit, ==, "Ñ");
-  g_assert_true (g_utf8_validate (result.commit, -1, NULL));
+    g_assert_true(compose_state_is_pending (state));
 
-  compose_result_clear (&result);
-  compose_state_free (state);
+    compose_result_clear(&result);
+
+    compose_state_reset(state);
+
+    g_assert_false(compose_state_is_pending (state));
+
+    result = compose_state_process_key(state, 'e', 0);
+
+    g_assert_false(result.handled);
+    g_assert_null(result.commit);
+
+    compose_result_clear(&result);
+    compose_state_free(state);
 }
 
-int
-main (int argc, char **argv)
+static void unicode_output_is_valid_utf8(void)
 {
-  g_test_init (&argc, &argv, NULL);
+    ComposeState* state = compose_state_new();
 
-  g_test_add_func ("/silent-compose-compose/required-sequences", test_required_sequences);
-  g_test_add_func ("/silent-compose-compose/repeated-accents", test_repeated_accents);
-  g_test_add_func ("/silent-compose-compose/cancellation", test_cancellation);
-  g_test_add_func ("/silent-compose-compose/unsupported-fallback", test_unsupported_sequence_fallback);
-  g_test_add_func ("/silent-compose-compose/shortcuts-bypass", test_shortcuts_bypass);
-  g_test_add_func ("/silent-compose-compose/shortcuts-bypass-while-pending", test_shortcuts_bypass_while_pending);
-  g_test_add_func ("/silent-compose-compose/modifier-key-while-pending-ignored", test_modifier_key_while_pending_is_ignored);
-  g_test_add_func ("/silent-compose-compose/plain-ascii-non-printable-bypass", test_plain_ascii_and_non_printable_bypass);
-  g_test_add_func ("/silent-compose-compose/pending-release-event-ignored", test_pending_release_event_is_ignored);
-  g_test_add_func ("/silent-compose-compose/pending-non-printable-fallback", test_pending_non_printable_commits_accent_and_bypasses_key);
-  g_test_add_func ("/silent-compose-compose/focus-reset", test_focus_reset);
-  g_test_add_func ("/silent-compose-compose/unicode-valid-utf8", test_unicode_output_is_valid_utf8);
+    ComposeResult result = compose_state_process_key(state, '~', 0);
 
-  return g_test_run ();
+    g_assert_true(result.handled);
+
+    compose_result_clear(&result);
+
+    result = compose_state_process_key(state, 'N', 0);
+
+    g_assert_true(result.handled);
+    g_assert_cmpstr(result.commit, ==, "Ñ");
+    g_assert_true(g_utf8_validate (result.commit, -1, NULL));
+
+    compose_result_clear(&result);
+    compose_state_free(state);
+}
+
+int main(int argc, char** argv)
+{
+    g_test_init(&argc, &argv, NULL);
+
+    g_test_add_func("/silent-compose-compose/required-sequences", required_sequences);
+    g_test_add_func("/silent-compose-compose/repeated-accents", repeated_accents);
+    g_test_add_func("/silent-compose-compose/cancellation", cancellation);
+    g_test_add_func("/silent-compose-compose/unsupported-fallback", unsupported_sequence_fallback);
+    g_test_add_func("/silent-compose-compose/shortcuts-bypass", shortcuts_bypass);
+    g_test_add_func("/silent-compose-compose/shortcuts-bypass-while-pending", shortcuts_bypass_while_pending);
+    g_test_add_func("/silent-compose-compose/modifier-key-while-pending-ignored", modifier_key_while_pending_is_ignored);
+    g_test_add_func("/silent-compose-compose/plain-ascii-non-printable-bypass", plain_ascii_and_non_printable_bypass);
+    g_test_add_func("/silent-compose-compose/level3-printable-bypass", level3_printable_bypass);
+    g_test_add_func("/silent-compose-compose/pending-release-event-ignored", pending_release_event_is_ignored);
+    g_test_add_func("/silent-compose-compose/pending-non-printable-fallback", pending_non_printable_commits_accent_and_bypasses_key);
+    g_test_add_func("/silent-compose-compose/focus-reset", focus_reset);
+    g_test_add_func("/silent-compose-compose/unicode-valid-utf8", unicode_output_is_valid_utf8);
+
+    return g_test_run();
 }

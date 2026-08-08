@@ -36,10 +36,10 @@ typedef struct
 /*
  * Built-in Windows US-International-style compose table.
  *
- * This table is deliberately small and explicit. The IBus backend uses plain
- * US as its base layout, so these rules provide the international behavior
- * without letting XKB dead keys or toolkit preedit machinery show a pending
- * accent before the final character is ready.
+ * This table is deliberately small and explicit. The IBus backend advertises
+ * the US altgr-intl layout variant for Level-3 characters, while these rules
+ * keep the five Silent Compose accent sequences private until the final
+ * character is ready.
  */
 static const ComposeRule compose_rules[] = {
     {.accent = PENDING_ACUTE, .input = 'a', .output = "á"},
@@ -129,18 +129,21 @@ static gboolean keyval_to_unicode(const guint keyval, gunichar* out_char)
     if (keyval < 0x80)
     {
         *out_char = keyval;
+
         return g_unichar_validate(*out_char);
     }
 
     if (keyval >= 0x01000100 && keyval <= 0x0110ffff)
     {
         *out_char = keyval - 0x01000000;
+
         return g_unichar_validate(*out_char);
     }
 
     if (keyval >= 0x00a0 && keyval <= 0x00ff)
     {
         *out_char = keyval;
+
         return g_unichar_validate(*out_char);
     }
 
@@ -156,6 +159,7 @@ static char* utf8_from_unichar(const gunichar ch)
         return NULL;
 
     const int len = g_unichar_to_utf8(ch, buffer);
+
     buffer[len] = '\0';
 
     return g_strdup(buffer);
@@ -178,17 +182,17 @@ static gboolean is_modifier_shortcut(const guint modifiers)
  */
 static gboolean is_non_printable_navigation_key(const guint keyval)
 {
-    return keyval == SC_KEY_DELETE ||
-        keyval == SC_KEY_LEFT ||
-        keyval == SC_KEY_UP ||
-        keyval == SC_KEY_RIGHT ||
-        keyval == SC_KEY_DOWN ||
-        keyval == SC_KEY_HOME ||
-        keyval == SC_KEY_END ||
-        keyval == SC_KEY_PAGE_UP ||
-        keyval == SC_KEY_PAGE_DOWN ||
-        keyval == SC_KEY_INSERT ||
-        (keyval >= 0xffbe && keyval <= 0xffe0);
+    return keyval == SC_KEY_DELETE
+        || keyval == SC_KEY_LEFT
+        || keyval == SC_KEY_UP
+        || keyval == SC_KEY_RIGHT
+        || keyval == SC_KEY_DOWN
+        || keyval == SC_KEY_HOME
+        || keyval == SC_KEY_END
+        || keyval == SC_KEY_PAGE_UP
+        || keyval == SC_KEY_PAGE_DOWN
+        || keyval == SC_KEY_INSERT
+        || (keyval >= 0xffbe && keyval <= 0xffe0);
 }
 
 /*
@@ -199,29 +203,29 @@ static gboolean pending_from_keyval(const guint keyval, PendingAccent* accent, g
 {
     switch (keyval)
     {
-    case '\'':
-        *accent = PENDING_ACUTE;
-        *literal = '\'';
+        case '\'':
+            *accent = PENDING_ACUTE;
+            *literal = '\'';
         return TRUE;
 
-    case '"':
-        *accent = PENDING_DIAERESIS;
-        *literal = '"';
+        case '"':
+            *accent = PENDING_DIAERESIS;
+            *literal = '"';
         return TRUE;
 
-    case '`':
-        *accent = PENDING_GRAVE;
-        *literal = '`';
+        case '`':
+            *accent = PENDING_GRAVE;
+            *literal = '`';
         return TRUE;
 
-    case '^':
-        *accent = PENDING_CIRCUMFLEX;
-        *literal = '^';
+        case '^':
+            *accent = PENDING_CIRCUMFLEX;
+            *literal = '^';
         return TRUE;
 
-    case '~':
-        *accent = PENDING_TILDE;
-        *literal = '~';
+        case '~':
+            *accent = PENDING_TILDE;
+            *literal = '~';
         return TRUE;
 
     default:
@@ -251,10 +255,12 @@ static char* concat_unichars(const gunichar first, const gunichar second)
     {
         g_free(first_utf8);
         g_free(second_utf8);
+
         return NULL;
     }
 
     char* combined = g_strconcat(first_utf8, second_utf8, NULL);
+
     g_free(first_utf8);
     g_free(second_utf8);
 
@@ -294,7 +300,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
         return result_unhandled();
 
     /*
-     * No pending accent: only consume one of the accent keys.  Ordinary text
+     * No pending accent: only consume one of the accent keys. Ordinary text
      * and shortcuts stay unhandled so the application/toolkit receives them
      * exactly as usual.
      */
@@ -310,6 +316,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
         {
             state->pending = accent;
             state->pending_literal = literal;
+
             return result_handled(NULL);
         }
 
@@ -317,7 +324,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
     }
 
     /*
-     * Escape and Backspace cancel an unfinished sequence.  They are consumed so
+     * Escape and Backspace cancel an unfinished sequence. They are consumed so
      * the application does not delete text or receive Escape for a sequence that
      * existed only inside the input method.
      */
@@ -336,13 +343,14 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
     if (keyval_to_unicode(keyval, &input))
     {
         /*
-         * Accent + Space means "commit one literal accent".  Repeating the same
+         * Accent + Space means "commit one literal accent". Repeating the same
          * accent intentionally does not use this path; it falls through to the
          * generic fallback and commits two literal characters.
          */
         if (input == ' ')
         {
             char* commit = utf8_from_unichar(state->pending_literal);
+
             const ComposeResult result = {
                 .handled = TRUE,
                 .commit = commit
@@ -354,6 +362,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
         }
 
         const char* composed = lookup_composition(state->pending, input);
+
         if (composed != NULL)
         {
             const ComposeResult result = result_handled(composed);
@@ -368,6 +377,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
          * committing the pending literal plus the new printable character.
          */
         char* fallback = concat_unichars(state->pending_literal, input);
+
         compose_state_reset(state);
 
         if (fallback != NULL)
@@ -382,6 +392,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
     if (is_non_printable_navigation_key(keyval))
     {
         char* commit = utf8_from_unichar(state->pending_literal);
+
         const ComposeResult result = {
             .handled = FALSE,
             .commit = commit

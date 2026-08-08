@@ -4,7 +4,7 @@
 typedef struct
 {
     /*
-     * Required first field for a GObject subtype.  It is read by the type
+     * Required first field for a GObject subtype. It is read by the type
      * system through casts/macros, not directly by our code.
      */
     IBusEngine parent_instance G_GNUC_UNUSED;
@@ -22,8 +22,7 @@ typedef struct
     IBusEngineClass parent_class G_GNUC_UNUSED;
 } ScEngineClass;
 
-#define SC_ENGINE(obj) \
-    (G_TYPE_CHECK_INSTANCE_CAST((obj), SC_TYPE_ENGINE, ScEngine))
+#define SC_ENGINE(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), SC_TYPE_ENGINE, ScEngine))
 
 G_DEFINE_TYPE(ScEngine, sc_engine, IBUS_TYPE_ENGINE)
 
@@ -93,6 +92,7 @@ static void commit_string(IBusEngine* engine, const char* str)
 static gboolean process_key_event(IBusEngine* engine, const guint keyval, const guint keycode, const guint state)
 {
     const ScEngine* self = SC_ENGINE(engine);
+
     ComposeResult result = compose_state_process_key(self->compose, keyval, translate_modifiers(state));
 
     if (self->debug)
