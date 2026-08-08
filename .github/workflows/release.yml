@@ -1,4 +1,4 @@
-name: Release
+name: 🚀 Release
 
 on:
     release:
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
     build:
-        name: Build Fedora 44 release assets
+        name: 🚀 Build Fedora 44 release assets
         runs-on: ubuntu-latest
         container:
             image: fedora:44
@@ -23,7 +23,7 @@ jobs:
             RPM_RELEASE: "1"
 
         steps:
-            -   name: Install build dependencies
+            -   name: ⚙️ Install build dependencies
                 run: |
                     set -Eeuo pipefail
                     dnf -y \
@@ -43,18 +43,18 @@ jobs:
                         tar \
                         xz
 
-            -   name: Check out release tag
+            -   name: 👀 Checkout
                 uses: actions/checkout@v4
                 with:
                     ref: ${{ github.event.release.tag_name }}
                     fetch-depth: 0
 
-            -   name: Trust checked-out workspace
+            -   name: ⚙️ Trust checked-out workspace
                 run: |
                     set -Eeuo pipefail
                     git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-            -   name: Validate release version
+            -   name: ⚙️ Validate release version
                 run: |
                     set -Eeuo pipefail
 
@@ -69,7 +69,7 @@ jobs:
                         echo "BINARY_ASSET=silent-compose.fc44.rpm"
                     } >> "${GITHUB_ENV}"
 
-            -   name: Build and test
+            -   name: 🔨 Build and test
                 run: |
                     set -Eeuo pipefail
 
@@ -85,7 +85,7 @@ jobs:
                     [[ "${MESON_VERSION}" == "${VERSION}" ]]
                     [[ "$(build/src/silent-compose-ibus --version)" == "Silent Compose ${VERSION}" ]]
 
-            -   name: Warning-as-error build and test
+            -   name: 🔨 Warning-as-error build and test
                 run: |
                     set -Eeuo pipefail
 
@@ -93,7 +93,7 @@ jobs:
                     meson compile -C build-review
                     meson test -C build-review --print-errorlogs
 
-            -   name: Build source archive
+            -   name: 🔨 Build source archive
                 run: |
                     set -Eeuo pipefail
 
@@ -105,7 +105,7 @@ jobs:
                         exit 1
                     fi
 
-            -   name: Build Fedora RPMs
+            -   name: 🔨 Build Fedora RPMs
                 run: |
                     set -Eeuo pipefail
 
@@ -152,7 +152,7 @@ jobs:
                         echo "SOURCE_RPM=${SOURCE_RPMS[0]}"
                     } >> "${GITHUB_ENV}"
 
-            -   name: Verify release artifacts
+            -   name: ⚙️ Verify release artifacts
                 run: |
                     set -Eeuo pipefail
 
@@ -208,7 +208,7 @@ jobs:
                             "silent-compose-${VERSION}.tar.xz" > SHA256SUMS
                     )
 
-            -   name: Upload build artifact
+            -   name: 🚀 Upload build artifact
                 uses: actions/upload-artifact@v4
                 with:
                     name: silent-compose-release-assets
@@ -216,7 +216,7 @@ jobs:
                     if-no-files-found: error
 
     upload:
-        name: Upload GitHub release assets
+        name: 🚀 Upload GitHub release assets
         runs-on: ubuntu-latest
         needs: build
 
@@ -226,18 +226,18 @@ jobs:
             GH_TOKEN: ${{ github.token }}
 
         steps:
-            -   name: Validate release tag
+            -   name: ⚙️ Validate release tag
                 run: |
                     set -Eeuo pipefail
                     [[ "${RELEASE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
 
-            -   name: Download build artifact
+            -   name: ⚙️ Download build artifact
                 uses: actions/download-artifact@v4
                 with:
                     name: silent-compose-release-assets
                     path: release-assets
 
-            -   name: Upload release assets
+            -   name: 🚀 Upload release assets
                 run: |
                     set -Eeuo pipefail
 
@@ -248,3 +248,62 @@ jobs:
                         release-assets/SHA256SUMS \
                         --repo "${GITHUB_REPOSITORY}" \
                         --clobber
+
+    copr:
+        name: 🚀 Publish COPR build
+        runs-on: ubuntu-latest
+        needs: [ build, upload ]
+        container:
+            image: fedora:44
+
+        env:
+            RELEASE_TAG: ${{ github.event.release.tag_name }}
+            RPM_RELEASE: "1"
+            COPR_CONFIG: ${{ secrets.COPR_CONFIG }}
+            COPR_PROJECT: ${{ vars.COPR_PROJECT }}
+
+        steps:
+            -   name: ⚙️ Validate COPR configuration
+                run: |
+                    set -Eeuo pipefail
+
+                    if [[ -z "${COPR_CONFIG}" ]]; then
+                        echo "::error title=Missing COPR_CONFIG secret::Use the contents of ~/.config/copr."
+                        exit 1
+                    fi
+
+                    if [[ -z "${COPR_PROJECT}" ]]; then
+                        echo "::error title=Missing COPR_PROJECT variable::Use almighty-shogun/silent-compose."
+                        exit 1
+                    fi
+
+            -   name: ⚙️ Install COPR client
+                run: |
+                    set -Eeuo pipefail
+
+                    dnf -y \
+                        --setopt=install_weak_deps=False \
+                        --setopt=tsflags=nodocs \
+                        install \
+                        copr-cli
+
+            -   name: ⚙️ Download build artifact
+                uses: actions/download-artifact@v4
+                with:
+                    name: silent-compose-release-assets
+                    path: release-assets
+
+            -   name: 🚀 Submit source RPM to COPR
+                run: |
+                    set -Eeuo pipefail
+
+                    SOURCE_RPM="release-assets/silent-compose-${RELEASE_TAG}-${RPM_RELEASE}.fc44.src.rpm"
+
+                    [[ "${RELEASE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+                    [[ -f "${SOURCE_RPM}" ]]
+
+                    mkdir -p "${HOME}/.config"
+                    printf '%s\n' "${COPR_CONFIG}" > "${HOME}/.config/copr"
+                    chmod 600 "${HOME}/.config/copr"
+
+                    copr-cli build "${COPR_PROJECT}" "${SOURCE_RPM}"
