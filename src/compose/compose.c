@@ -99,6 +99,7 @@ static const ComposeRule compose_rules[] = {
     {.accent = PENDING_TILDE, .input = 'O', .output = "Õ"},
 };
 
+/* Return an unhandled result without commit text. */
 static ComposeResult result_unhandled(void)
 {
     return (ComposeResult){
@@ -228,8 +229,8 @@ static gboolean pending_from_keyval(const guint keyval, PendingAccent* accent, g
             *literal = '~';
         return TRUE;
 
-    default:
-        return FALSE;
+        default:
+            return FALSE;
     }
 }
 
@@ -267,16 +268,19 @@ static char* concat_unichars(const gunichar first, const gunichar second)
     return combined;
 }
 
+/* Allocate composition state with no pending accent. */
 ComposeState* compose_state_new(void)
 {
     return g_new0(ComposeState, 1);
 }
 
+/* Release composition state allocated by compose_state_new(). */
 void compose_state_free(ComposeState* state)
 {
     g_free(state);
 }
 
+/* Clear pending accent state without producing committed text. */
 void compose_state_reset(ComposeState* state)
 {
     g_return_if_fail(state != NULL);
@@ -285,6 +289,7 @@ void compose_state_reset(ComposeState* state)
     state->pending_literal = 0;
 }
 
+/* Report whether an accent key is currently stored in private state. */
 gboolean compose_state_is_pending(const ComposeState* state)
 {
     g_return_val_if_fail(state != NULL, FALSE);
@@ -292,6 +297,10 @@ gboolean compose_state_is_pending(const ComposeState* state)
     return state->pending != PENDING_NONE;
 }
 
+/*
+ * Process one normalized key event and return whether the caller should consume
+ * it, optionally with completed UTF-8 text to commit.
+ */
 ComposeResult compose_state_process_key(ComposeState* state, const guint keyval, const guint modifiers)
 {
     g_return_val_if_fail(state != NULL, result_unhandled ());
@@ -406,6 +415,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
     return result_unhandled();
 }
 
+/* Free commit text owned by the result and reset it to the unhandled state. */
 void compose_result_clear(ComposeResult* result)
 {
     if (result == NULL)
