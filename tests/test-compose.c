@@ -9,12 +9,16 @@ enum
     KEY_LEFT = 0xff51,
     KEY_SHIFT_L = 0xffe1,
     KEY_EURO_SIGN = 0x20ac,
+    KEY_DEAD_ACUTE = 0xfe51,
+    KEY_DEAD_CIRCUMFLEX = 0xfe52,
+    KEY_DEAD_TILDE = 0xfe53,
+    KEY_DEAD_DIAERESIS = 0xfe57,
 };
 
+/* Assert one two-key compose sequence produces the expected committed text. */
 static void assert_sequence(const char* label, const guint first, const guint second, const char* expected)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, first, 0);
 
     g_assert_true(result.handled);
@@ -35,6 +39,7 @@ static void assert_sequence(const char* label, const guint first, const guint se
     compose_state_free(state);
 }
 
+/* Verify the required Windows-style accent sequences and literal Space output. */
 static void required_sequences(void)
 {
     assert_sequence("' + e", '\'', 'e', "é");
@@ -52,6 +57,17 @@ static void required_sequences(void)
     assert_sequence("~ + Space", '~', ' ', "~");
 }
 
+/* Verify XKB dead-key keysyms behave like their printable accent keys. */
+static void dead_key_keysyms(void)
+{
+    assert_sequence("dead_acute + e", KEY_DEAD_ACUTE, 'e', "é");
+    assert_sequence("dead_acute + c", KEY_DEAD_ACUTE, 'c', "ç");
+    assert_sequence("dead_diaeresis + u", KEY_DEAD_DIAERESIS, 'u', "ü");
+    assert_sequence("dead_circumflex + o", KEY_DEAD_CIRCUMFLEX, 'o', "ô");
+    assert_sequence("dead_tilde + n", KEY_DEAD_TILDE, 'n', "ñ");
+}
+
+/* Verify repeating an accent commits both literal accent characters. */
 static void repeated_accents(void)
 {
     assert_sequence("' + '", '\'', '\'', "''");
@@ -61,10 +77,10 @@ static void repeated_accents(void)
     assert_sequence("~ + ~", '~', '~', "~~");
 }
 
+/* Verify Backspace and Escape silently cancel pending accent state. */
 static void cancellation(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '\'', 0);
 
     g_assert_true(result.handled);
@@ -97,16 +113,17 @@ static void cancellation(void)
     compose_state_free(state);
 }
 
+/* Verify unsupported printable completions fall back to literal text. */
 static void unsupported_sequence_fallback(void)
 {
     assert_sequence("' + t", '\'', 't', "'t");
     assert_sequence("~ + x", '~', 'x', "~x");
 }
 
+/* Verify shortcut-modified keys bypass compose handling. */
 static void shortcuts_bypass(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, 'c', COMPOSE_MOD_CONTROL);
 
     g_assert_false(result.handled);
@@ -137,10 +154,10 @@ static void shortcuts_bypass(void)
     compose_state_free(state);
 }
 
+/* Verify shortcuts still bypass compose while an accent is pending. */
 static void shortcuts_bypass_while_pending(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '\'', 0);
 
     g_assert_true(result.handled);
@@ -166,10 +183,10 @@ static void shortcuts_bypass_while_pending(void)
     compose_state_free(state);
 }
 
+/* Verify standalone modifier keys do not clear pending accent state. */
 static void modifier_key_while_pending_is_ignored(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '"', 0);
 
     g_assert_true(result.handled);
@@ -195,10 +212,10 @@ static void modifier_key_while_pending_is_ignored(void)
     compose_state_free(state);
 }
 
+/* Verify ordinary ASCII and navigation-like keys bypass with no pending accent. */
 static void plain_ascii_and_non_printable_bypass(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, 'a', 0);
 
     g_assert_false(result.handled);
@@ -222,10 +239,10 @@ static void plain_ascii_and_non_printable_bypass(void)
     compose_state_free(state);
 }
 
+/* Verify Level-3 printable symbols are left to the IBus passthrough layer. */
 static void level3_printable_bypass(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, KEY_EURO_SIGN, 0);
 
     g_assert_false(result.handled);
@@ -244,10 +261,10 @@ static void level3_printable_bypass(void)
     compose_state_free(state);
 }
 
+/* Verify release events do not affect pending accent state. */
 static void pending_release_event_is_ignored(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '\'', 0);
 
     g_assert_true(result.handled);
@@ -272,10 +289,10 @@ static void pending_release_event_is_ignored(void)
     compose_state_free(state);
 }
 
+/* Verify navigation keys commit the pending literal and still bypass the key. */
 static void pending_non_printable_commits_accent_and_bypasses_key(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '\'', 0);
 
     g_assert_true(result.handled);
@@ -292,10 +309,10 @@ static void pending_non_printable_commits_accent_and_bypasses_key(void)
     compose_state_free(state);
 }
 
+/* Verify explicit reset clears pending accent state. */
 static void focus_reset(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '\'', 0);
 
     g_assert_true(compose_state_is_pending (state));
@@ -315,10 +332,10 @@ static void focus_reset(void)
     compose_state_free(state);
 }
 
+/* Verify composed Unicode output is valid UTF-8. */
 static void unicode_output_is_valid_utf8(void)
 {
     ComposeState* state = compose_state_new();
-
     ComposeResult result = compose_state_process_key(state, '~', 0);
 
     g_assert_true(result.handled);
@@ -335,11 +352,13 @@ static void unicode_output_is_valid_utf8(void)
     compose_state_free(state);
 }
 
+/* Register compose-state unit tests. */
 int main(int argc, char** argv)
 {
     g_test_init(&argc, &argv, NULL);
 
     g_test_add_func("/silent-compose-compose/required-sequences", required_sequences);
+    g_test_add_func("/silent-compose-compose/dead-key-keysyms", dead_key_keysyms);
     g_test_add_func("/silent-compose-compose/repeated-accents", repeated_accents);
     g_test_add_func("/silent-compose-compose/cancellation", cancellation);
     g_test_add_func("/silent-compose-compose/unsupported-fallback", unsupported_sequence_fallback);

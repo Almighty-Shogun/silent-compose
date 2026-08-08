@@ -63,15 +63,15 @@ static void debug(const ScIMContext* self, const char* message)
 }
 
 /* GTK adds signals across releases; look up optional ones before connecting. */
-static gboolean signal_exists(const GType type, const char* signal_name)
+static gboolean signal_exists(const GType type, const char* name)
 {
-    return g_signal_lookup(signal_name, type) != 0;
+    return g_signal_lookup(name, type) != 0;
 }
 
 /* Forward only completed text from GtkIMContextSimple to the client context. */
-static void delegate_commit_cb(GtkIMContext* delegate, const char* str, void* const user_data)
+static void delegate_commit_cb(GtkIMContext* _, const char* str, void* const data)
 {
-    ScIMContext* self = SC_IM_CONTEXT(user_data);
+    ScIMContext* self = SC_IM_CONTEXT(data);
 
     if (self->debug)
         g_debug("forwarding commit from delegated GtkIMContextSimple: “%s”", str);
@@ -80,36 +80,38 @@ static void delegate_commit_cb(GtkIMContext* delegate, const char* str, void* co
 }
 
 /* Let the delegate ask the client for surrounding text through this wrapper. */
-static gboolean delegate_retrieve_surrounding_cb(GtkIMContext* delegate, void* const user_data)
+static gboolean delegate_retrieve_surrounding_cb(GtkIMContext* _, void* const data)
 {
-    ScIMContext* self = SC_IM_CONTEXT(user_data);
+    ScIMContext* self = SC_IM_CONTEXT(data);
+
     gboolean handled = FALSE;
 
     debug(self, "forwarding retrieve-surrounding request");
+
     g_signal_emit_by_name(self, "retrieve-surrounding", &handled);
 
     return handled;
 }
 
 /* Forward deletion requests from the delegate to the real client. */
-static gboolean delegate_delete_surrounding_cb(GtkIMContext* delegate,
-                                               const int offset,
-                                               const int n_chars,
-                                               void* const user_data)
+static gboolean delegate_delete_surrounding_cb(GtkIMContext* _, const int offset, const int n, void* const data)
 {
-    ScIMContext* self = SC_IM_CONTEXT(user_data);
+    ScIMContext* self = SC_IM_CONTEXT(data);
+
     gboolean handled = FALSE;
 
     debug(self, "forwarding delete-surrounding request");
-    g_signal_emit_by_name(self, "delete-surrounding", offset, n_chars, &handled);
+
+    g_signal_emit_by_name(self, "delete-surrounding", offset, n, &handled);
 
     return handled;
 }
 
 /* Preserve GTK's invalid-composition behavior when the signal exists. */
-static gboolean delegate_invalid_composition_cb(GtkIMContext* delegate, const char* str, void* const user_data)
+static gboolean delegate_invalid_composition_cb(GtkIMContext* _, const char* str, void* const data)
 {
-    ScIMContext* self = SC_IM_CONTEXT(user_data);
+    ScIMContext* self = SC_IM_CONTEXT(data);
+
     gboolean handled = FALSE;
 
     if (!signal_exists(G_OBJECT_TYPE(self), "invalid-composition"))
@@ -126,9 +128,9 @@ static gboolean delegate_invalid_composition_cb(GtkIMContext* delegate, const ch
  * Applications must never see a pending dead key, underline, highlighted range,
  * popup, or other temporary preedit UI from this module.
  */
-static void delegate_preedit_ignored_cb(GtkIMContext* delegate, void* const user_data)
+static void delegate_preedit_ignored_cb(GtkIMContext* _, void* const data)
 {
-    const ScIMContext* self = SC_IM_CONTEXT(user_data);
+    const ScIMContext* self = SC_IM_CONTEXT(data);
 
     debug(self, "suppressed delegated preedit signal");
 }
@@ -149,11 +151,11 @@ static void connect_delegate(ScIMContext* self)
 }
 
 /* Keep overridden input-purpose/input-hints properties mirrored to the delegate. */
-static void set_property(GObject* object, const guint property_id, const GValue* value, GParamSpec* pspec)
+static void set_property(GObject* object, const guint prop_id, const GValue* value, GParamSpec* pspec)
 {
     ScIMContext* self = SC_IM_CONTEXT(object);
 
-    switch (property_id)
+    switch (prop_id)
     {
         case PROP_INPUT_PURPOSE:
             self->input_purpose = g_value_get_enum(value);
@@ -172,17 +174,17 @@ static void set_property(GObject* object, const guint property_id, const GValue*
         break;
 
         default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
 }
 
 /* Report the wrapper's cached property values. */
-static void get_property(GObject* object, const guint property_id, GValue* value, GParamSpec* pspec)
+static void get_property(GObject* object, const guint prop_id, GValue* value, GParamSpec* pspec)
 {
     const ScIMContext* self = SC_IM_CONTEXT(object);
 
-    switch (property_id)
+    switch (prop_id)
     {
         case PROP_INPUT_PURPOSE:
             g_value_set_enum(value, self->input_purpose);
@@ -193,7 +195,7 @@ static void get_property(GObject* object, const guint property_id, GValue* value
         break;
 
         default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
 }
@@ -224,7 +226,7 @@ static void set_client_widget(GtkIMContext* context, GtkWidget* widget)
  * Always return an empty preedit string.  Returning attrs with an empty string
  * keeps the API contract while preventing visible preedit UI.
  */
-static void get_preedit_string(GtkIMContext* context, char** str, PangoAttrList** attrs, int* cursor_pos)
+static void get_preedit_string(GtkIMContext* _, char** str, PangoAttrList** attrs, int* cursor)
 {
     if (str != NULL)
         *str = g_strdup("");
@@ -232,14 +234,15 @@ static void get_preedit_string(GtkIMContext* context, char** str, PangoAttrList*
     if (attrs != NULL)
         *attrs = pango_attr_list_new();
 
-    if (cursor_pos != NULL)
-        *cursor_pos = 0;
+    if (cursor != NULL)
+        *cursor = 0;
 }
 
 /* Delegate key filtering; visible preedit output is still suppressed by signal handlers. */
 static gboolean filter_keypress(GtkIMContext* context, GdkEvent* event)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
+
     const gboolean handled = gtk_im_context_filter_keypress(self->delegate, event);
 
     if (self->debug)
@@ -254,6 +257,7 @@ static void focus_in(GtkIMContext* context)
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
     debug(self, "focus-in");
+
     gtk_im_context_focus_in(self->delegate);
 }
 
@@ -263,6 +267,7 @@ static void focus_out(GtkIMContext* context)
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
     debug(self, "focus-out");
+
     gtk_im_context_focus_out(self->delegate);
 }
 
@@ -272,6 +277,7 @@ static void reset(GtkIMContext* context)
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
     debug(self, "reset");
+
     gtk_im_context_reset(self->delegate);
 }
 
@@ -292,51 +298,49 @@ static void set_cursor_location(GtkIMContext* context, GdkRectangle* area)
 }
 
 /* Ignore the requested value and force the delegate into no-preedit mode. */
-static void set_use_preedit(GtkIMContext* context, const gboolean use_preedit)
+static void set_use_preedit(GtkIMContext* context, const gboolean use)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
-    (void)use_preedit;
+    (void)use;
 
     debug(self, "forcing delegated use-preedit=false");
+
     gtk_im_context_set_use_preedit(self->delegate, FALSE);
 }
 
 /* Compatibility vfunc: forward via the non-deprecated selection-aware API. */
-static void set_surrounding(GtkIMContext* context, const char* text, const int len, const int cursor_index)
+static void set_surrounding(GtkIMContext* context, const char* text, const int len, const int cursor)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
-    gtk_im_context_set_surrounding_with_selection(self->delegate, text, len, cursor_index, cursor_index);
+    gtk_im_context_set_surrounding_with_selection(self->delegate, text, len, cursor, cursor);
 }
 
 /* Compatibility vfunc: retrieve surrounding text through the modern GTK API. */
-static gboolean get_surrounding(GtkIMContext* context, char** text, int* cursor_index)
+static gboolean get_surrounding(GtkIMContext* context, char** text, int* cursor)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
-    int anchor_index = 0;
 
-    return gtk_im_context_get_surrounding_with_selection(self->delegate, text, cursor_index, &anchor_index);
+    int anchor = 0;
+
+    return gtk_im_context_get_surrounding_with_selection(self->delegate, text, cursor, &anchor);
 }
 
 /* Forward modern surrounding-text state to the delegate. */
-static void set_surrounding_with_selection(GtkIMContext* context,
-                                           const char* text,
-                                           const int len,
-                                           const int cursor_index,
-                                           const int anchor_index)
+static void set_surrounding_with_selection(GtkIMContext* context, const char* text, const int len, const int cursor, const int anchor)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
-    gtk_im_context_set_surrounding_with_selection(self->delegate, text, len, cursor_index, anchor_index);
+    gtk_im_context_set_surrounding_with_selection(self->delegate, text, len, cursor, anchor);
 }
 
 /* Forward modern surrounding-text retrieval to the delegate. */
-static gboolean get_surrounding_with_selection(GtkIMContext* context, char** text, int* cursor_index, int* anchor_index)
+static gboolean get_surrounding_with_selection(GtkIMContext* context, char** text, int* cursor, int* anchor)
 {
     const ScIMContext* self = SC_IM_CONTEXT(context);
 
-    return gtk_im_context_get_surrounding_with_selection(self->delegate, text, cursor_index, anchor_index);
+    return gtk_im_context_get_surrounding_with_selection(self->delegate, text, cursor, anchor);
 }
 
 #if GTK_CHECK_VERSION(4, 14, 0)

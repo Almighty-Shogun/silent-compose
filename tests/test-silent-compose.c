@@ -14,46 +14,55 @@ typedef struct
 
 static gboolean gtk_available = FALSE;
 
-static void probe_commit_cb(GtkIMContext* _, const char* str, void* const user_data)
+/* Record committed text emitted by the context under test. */
+static void probe_commit_cb(GtkIMContext* _, const char* str, void* const data)
 {
-    SignalProbe* probe = user_data;
+    SignalProbe* probe = data;
 
     probe->commit_count++;
+
     g_string_append(probe->commits, str);
 }
 
-static void probe_preedit_start_cb(GtkIMContext* _, void* const user_data)
+/* Count client-visible preedit-start signals. */
+static void probe_preedit_start_cb(GtkIMContext* _, void* const data)
 {
-    SignalProbe* probe = user_data;
+    SignalProbe* probe = data;
 
     probe->preedit_start_count++;
 }
 
-static void probe_preedit_changed_cb(GtkIMContext* _, void* const user_data)
+/* Count client-visible preedit-changed signals. */
+static void probe_preedit_changed_cb(GtkIMContext* _, void* const data)
 {
-    SignalProbe* probe = user_data;
+    SignalProbe* probe = data;
 
     probe->preedit_changed_count++;
 }
 
-static void probe_preedit_end_cb(GtkIMContext* _, void* const user_data)
+/* Count client-visible preedit-end signals. */
+static void probe_preedit_end_cb(GtkIMContext* _, void* const data)
 {
-    SignalProbe* probe = user_data;
+    SignalProbe* probe = data;
 
     probe->preedit_end_count++;
 }
 
+/* Initialize a signal probe before attaching it to an input context. */
 static void probe_init(SignalProbe* probe)
 {
     memset(probe, 0, sizeof (*probe));
+
     probe->commits = g_string_new(NULL);
 }
 
+/* Release dynamic storage owned by a signal probe. */
 static void probe_clear(const SignalProbe* probe)
 {
     g_string_free(probe->commits, TRUE);
 }
 
+/* Attach commit and preedit counters to the input context under test. */
 static void attach_probe(GtkIMContext* context, SignalProbe* probe)
 {
     g_signal_connect(context, "commit", G_CALLBACK (probe_commit_cb), probe);
@@ -62,25 +71,29 @@ static void attach_probe(GtkIMContext* context, SignalProbe* probe)
     g_signal_connect(context, "preedit-end", G_CALLBACK (probe_preedit_end_cb), probe);
 }
 
+/* Verify the wrapper never exposes visible preedit text. */
 static void preedit_string_is_always_empty(void)
 {
+    int cursor = -1;
+
     char* preedit = NULL;
     PangoAttrList* attrs = NULL;
-    int cursor_pos = -1;
 
     if (!gtk_available)
     {
         g_test_skip("GTK could not initialize a display");
+
         return;
     }
 
     GtkIMContext* context = im_context_new();
-    gtk_im_context_get_preedit_string(context, &preedit, &attrs, &cursor_pos);
+
+    gtk_im_context_get_preedit_string(context, &preedit, &attrs, &cursor);
 
     g_assert_nonnull(preedit);
     g_assert_cmpstr(preedit, ==, "");
     g_assert_nonnull(attrs);
-    g_assert_cmpint(cursor_pos, ==, 0);
+    g_assert_cmpint(cursor, ==, 0);
 
     g_free(preedit);
 
@@ -88,6 +101,7 @@ static void preedit_string_is_always_empty(void)
     g_object_unref(context);
 }
 
+/* Verify lifecycle calls do not emit client-visible preedit signals. */
 static void no_client_preedit_signals_for_lifecycle_calls(void)
 {
     SignalProbe probe;
@@ -95,6 +109,7 @@ static void no_client_preedit_signals_for_lifecycle_calls(void)
     if (!gtk_available)
     {
         g_test_skip("GTK could not initialize a display");
+
         return;
     }
 
@@ -117,6 +132,7 @@ static void no_client_preedit_signals_for_lifecycle_calls(void)
     g_object_unref(context);
 }
 
+/* Provide surrounding text when the context requests it. */
 static gboolean retrieve_surrounding_cb(GtkIMContext* context, void* const _)
 {
     gtk_im_context_set_surrounding_with_selection(context, "abc", -1, 1, 1);
@@ -124,40 +140,47 @@ static gboolean retrieve_surrounding_cb(GtkIMContext* context, void* const _)
     return TRUE;
 }
 
+/* Verify surrounding-text requests round-trip through the wrapper. */
 static void surrounding_signal_round_trip(void)
 {
+    int cursor = -1;
+    int anchor = -1;
+
     char* text = NULL;
-    int cursor_index = -1;
-    int anchor_index = -1;
 
     if (!gtk_available)
     {
         g_test_skip("GTK could not initialize a display");
+
         return;
     }
 
     GtkIMContext* context = im_context_new();
+
     g_signal_connect(context, "retrieve-surrounding", G_CALLBACK (retrieve_surrounding_cb), NULL);
 
-    const gboolean ok = gtk_im_context_get_surrounding_with_selection(context, &text, &cursor_index, &anchor_index);
+    const gboolean ok = gtk_im_context_get_surrounding_with_selection(context, &text, &cursor, &anchor);
 
     g_assert_true(ok);
     g_assert_cmpstr(text, ==, "abc");
-    g_assert_cmpint(cursor_index, ==, 1);
-    g_assert_cmpint(anchor_index, ==, 1);
+    g_assert_cmpint(cursor, ==, 1);
+    g_assert_cmpint(anchor, ==, 1);
 
     g_free(text);
+
     g_object_unref(context);
 }
 
+/* Verify input-purpose and input-hints properties round-trip through the wrapper. */
 static void input_properties_round_trip(void)
 {
-    GtkInputPurpose purpose = GTK_INPUT_PURPOSE_FREE_FORM;
     GtkInputHints hints = GTK_INPUT_HINT_NONE;
+    GtkInputPurpose purpose = GTK_INPUT_PURPOSE_FREE_FORM;
 
     if (!gtk_available)
     {
         g_test_skip("GTK could not initialize a display");
+
         return;
     }
 
@@ -199,24 +222,32 @@ enum
     KEY_SPACE = 57 + EVDEV_OFFSET,
 };
 
-static gboolean filter_press(GtkIMContext* context, const KeyTestEnv* env, const guint keycode, const GdkModifierType state)
+/* Send a synthetic key press through GTK's modern key filtering API. */
+static gboolean filter_press(GtkIMContext* context, const KeyTestEnv* env, const guint code, const GdkModifierType state)
 {
-    return gtk_im_context_filter_key(context, TRUE, env->surface, env->device, GDK_CURRENT_TIME, keycode, state, 0);
+    return gtk_im_context_filter_key(context, TRUE, env->surface, env->device, GDK_CURRENT_TIME, code, state, 0);
 }
 
-static void assert_key_sequence_commit(const char* label, const KeyTestEnv* env, const guint first_keycode,
-                                       const GdkModifierType first_state, const guint second_keycode,
-                                       const GdkModifierType second_state, const char* expected)
+/* Assert a two-key GTK input sequence emits only the expected commit text. */
+static void assert_key_sequence_commit(
+    const char* label,
+    const KeyTestEnv* env,
+    const guint first_key,
+    const GdkModifierType first_mods,
+    const guint second_key,
+    const GdkModifierType second_mods,
+    const char* expected)
 {
     GtkIMContext* context = im_context_new();
+
     SignalProbe probe;
 
     probe_init(&probe);
     attach_probe(context, &probe);
     gtk_im_context_focus_in(context);
 
-    g_assert_true(filter_press (context, env, first_keycode, first_state));
-    g_assert_true(filter_press (context, env, second_keycode, second_state));
+    g_assert_true(filter_press (context, env, first_key, first_mods));
+    g_assert_true(filter_press (context, env, second_key, second_mods));
 
     g_assert_cmpstr(probe.commits->str, ==, expected);
     g_assert_cmpuint(probe.preedit_start_count, ==, 0);
@@ -230,6 +261,7 @@ static void assert_key_sequence_commit(const char* label, const KeyTestEnv* env,
     g_object_unref(context);
 }
 
+/* Run display/layout-dependent end-to-end key filtering checks when enabled. */
 static void key_sequences_on_current_display(void)
 {
     KeyTestEnv env;
@@ -238,12 +270,14 @@ static void key_sequences_on_current_display(void)
     if (g_getenv("SILENT_COMPOSE_RUN_KEY_TESTS") == NULL)
     {
         g_test_skip("set SILENT_COMPOSE_RUN_KEY_TESTS=1 to run display/layout-dependent key tests");
+
         return;
     }
 
     if (!gtk_available)
     {
         g_test_skip("GTK could not initialize a display");
+
         return;
     }
 
@@ -303,15 +337,17 @@ static void key_sequences_on_current_display(void)
     gtk_window_destroy(GTK_WINDOW(window));
 }
 
-static gboolean focus_text_view_cb(void* const user_data)
+/* Move keyboard focus into the manual validation text view after presentation. */
+static gboolean focus_text_view_cb(void* const data)
 {
-    GtkWidget* text_view = GTK_WIDGET(user_data);
+    GtkWidget* text_view = GTK_WIDGET(data);
 
     gtk_widget_grab_focus(text_view);
 
     return G_SOURCE_REMOVE;
 }
 
+/* Build the manual validation window used by --manual. */
 static void activate_manual_app(GtkApplication* app, void* const _)
 {
     GtkWidget* window = gtk_application_window_new(app);
@@ -329,6 +365,7 @@ static void activate_manual_app(GtkApplication* app, void* const _)
 
     GtkWidget* label = gtk_label_new("Type Compose/dead-key sequences here. Expected: completed characters only; "
         "no visible pending dead key or preedit underline/highlight.");
+
     gtk_label_set_wrap(GTK_LABEL(label), TRUE);
     gtk_box_append(GTK_BOX(box), label);
 
@@ -344,6 +381,7 @@ static void activate_manual_app(GtkApplication* app, void* const _)
     g_idle_add(focus_text_view_cb, text_view);
 }
 
+/* Run the optional manual validation application. */
 static int run_manual_app(const int argc, char** argv)
 {
     GtkApplication* app = gtk_application_new("dev.silentcompose.ManualTest", G_APPLICATION_DEFAULT_FLAGS);
@@ -357,6 +395,7 @@ static int run_manual_app(const int argc, char** argv)
     return status;
 }
 
+/* Register GTK input-method tests or launch the manual validation app. */
 int main(int argc, char** argv)
 {
     for (int i = 1; i < argc; i++)

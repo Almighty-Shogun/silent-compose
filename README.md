@@ -182,4 +182,9 @@ launchers.
 SILENT_COMPOSE_DEBUG=1
 ```
 
-Keep debug logging disabled during normal typing.
+The IBus engine also appends key-routing diagnostics to
+`/tmp/silent-compose-ibus.log` by default because IBus can redirect engine
+stderr to `/dev/null`. Set `SILENT_COMPOSE_DEBUG_LOG` to choose a different
+path.
+
+Keep debug logging disabled during normal typing because it records key events.

@@ -17,9 +17,11 @@ GType sc_engine_get_type(void);
 /*
  * Internal helper exposed for tests.
  *
- * Return TRUE and write UTF-8 text to buffer when an unhandled IBus key event
- * carries printable non-ASCII text that this backend should commit directly.
+ * Return TRUE and write UTF-8 text to buf when an unhandled IBus key event
+ * carries a Windows US-International AltGr symbol that this backend should
+ * commit directly. altgr covers sessions that report Right Alt through Mod1
+ * while the key is held.
  */
-gboolean sc_engine_make_passthrough_text(guint keyval, guint state, char* buffer, gsize buffer_size);
+gboolean sc_engine_passthrough_text(guint key, guint code, guint state, gboolean altgr, char* buf, gsize buf_size);
 
 G_END_DECLS

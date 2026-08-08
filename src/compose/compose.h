@@ -66,7 +66,7 @@ gboolean compose_state_is_pending(const ComposeState* state);
  * This function never exposes preedit text.  It either returns unhandled,
  * consumes a pending accent silently, or returns completed UTF-8 text to commit.
  */
-ComposeResult compose_state_process_key(ComposeState* state, guint keyval, guint modifiers);
+ComposeResult compose_state_process_key(ComposeState* state, guint key, guint mods);
 
 /* Release result-owned memory and reset the result to an unhandled state. */
 void compose_result_clear(ComposeResult* result);

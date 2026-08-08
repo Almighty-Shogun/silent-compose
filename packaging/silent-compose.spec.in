@@ -16,7 +16,9 @@ BuildRequires:  pkgconfig(ibus-1.0) >= 1.5.0
 Requires:       ibus
 Requires:       gtk4%{?_isa}
 Requires(posttrans): glib2
+Requires(posttrans): ibus
 Requires(postun):    glib2
+Requires(postun):    ibus
 Provides:       silent-compose-gtk4 = %{version}-%{release}
 Obsoletes:      silent-compose-gtk4 < %{version}-%{release}
 
@@ -43,10 +45,13 @@ export SC_VERSION=%{version}
 %posttrans
 %{_bindir}/gio-querymodules-%{__isa_bits} \
     %{_libdir}/gtk-4.0/immodules || :
+touch %{_datadir}/ibus/component/org.freedesktop.IBus.SilentCompose.xml || :
+%{_bindir}/ibus write-cache --system >/dev/null 2>&1 || :
 
 %postun
 %{_bindir}/gio-querymodules-%{__isa_bits} \
     %{_libdir}/gtk-4.0/immodules || :
+%{_bindir}/ibus write-cache --system >/dev/null 2>&1 || :
 
 %files
 %license LICENSE

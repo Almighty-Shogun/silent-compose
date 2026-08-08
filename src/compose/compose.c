@@ -14,6 +14,11 @@ enum
     SC_KEY_PAGE_UP = 0xff55,
     SC_KEY_PAGE_DOWN = 0xff56,
     SC_KEY_INSERT = 0xff63,
+    SC_KEY_DEAD_GRAVE = 0xfe50,
+    SC_KEY_DEAD_ACUTE = 0xfe51,
+    SC_KEY_DEAD_CIRCUMFLEX = 0xfe52,
+    SC_KEY_DEAD_TILDE = 0xfe53,
+    SC_KEY_DEAD_DIAERESIS = 0xfe57,
 };
 
 typedef enum
@@ -36,67 +41,66 @@ typedef struct
 /*
  * Built-in Windows US-International-style compose table.
  *
- * This table is deliberately small and explicit. The IBus backend advertises
- * the US altgr-intl layout variant for Level-3 characters, while these rules
- * keep the five Silent Compose accent sequences private until the final
- * character is ready.
+ * This table is deliberately small and explicit. The IBus backend uses a
+ * Windows US-International AltGr table, while these rules keep the five Silent
+ * Compose accent sequences private until the final character is ready.
  */
 static const ComposeRule compose_rules[] = {
-    {.accent = PENDING_ACUTE, .input = 'a', .output = "á"},
-    {.accent = PENDING_ACUTE, .input = 'A', .output = "Á"},
-    {.accent = PENDING_ACUTE, .input = 'c', .output = "ç"},
-    {.accent = PENDING_ACUTE, .input = 'C', .output = "Ç"},
-    {.accent = PENDING_ACUTE, .input = 'e', .output = "é"},
-    {.accent = PENDING_ACUTE, .input = 'E', .output = "É"},
-    {.accent = PENDING_ACUTE, .input = 'i', .output = "í"},
-    {.accent = PENDING_ACUTE, .input = 'I', .output = "Í"},
-    {.accent = PENDING_ACUTE, .input = 'o', .output = "ó"},
-    {.accent = PENDING_ACUTE, .input = 'O', .output = "Ó"},
-    {.accent = PENDING_ACUTE, .input = 'u', .output = "ú"},
-    {.accent = PENDING_ACUTE, .input = 'U', .output = "Ú"},
-    {.accent = PENDING_ACUTE, .input = 'y', .output = "ý"},
-    {.accent = PENDING_ACUTE, .input = 'Y', .output = "Ý"},
+    { .accent = PENDING_ACUTE, .input = 'a', .output = "á" },
+    { .accent = PENDING_ACUTE, .input = 'A', .output = "Á" },
+    { .accent = PENDING_ACUTE, .input = 'c', .output = "ç" },
+    { .accent = PENDING_ACUTE, .input = 'C', .output = "Ç" },
+    { .accent = PENDING_ACUTE, .input = 'e', .output = "é" },
+    { .accent = PENDING_ACUTE, .input = 'E', .output = "É" },
+    { .accent = PENDING_ACUTE, .input = 'i', .output = "í" },
+    { .accent = PENDING_ACUTE, .input = 'I', .output = "Í" },
+    { .accent = PENDING_ACUTE, .input = 'o', .output = "ó" },
+    { .accent = PENDING_ACUTE, .input = 'O', .output = "Ó" },
+    { .accent = PENDING_ACUTE, .input = 'u', .output = "ú" },
+    { .accent = PENDING_ACUTE, .input = 'U', .output = "Ú" },
+    { .accent = PENDING_ACUTE, .input = 'y', .output = "ý" },
+    { .accent = PENDING_ACUTE, .input = 'Y', .output = "Ý" },
 
-    {.accent = PENDING_DIAERESIS, .input = 'a', .output = "ä"},
-    {.accent = PENDING_DIAERESIS, .input = 'A', .output = "Ä"},
-    {.accent = PENDING_DIAERESIS, .input = 'e', .output = "ë"},
-    {.accent = PENDING_DIAERESIS, .input = 'E', .output = "Ë"},
-    {.accent = PENDING_DIAERESIS, .input = 'i', .output = "ï"},
-    {.accent = PENDING_DIAERESIS, .input = 'I', .output = "Ï"},
-    {.accent = PENDING_DIAERESIS, .input = 'o', .output = "ö"},
-    {.accent = PENDING_DIAERESIS, .input = 'O', .output = "Ö"},
-    {.accent = PENDING_DIAERESIS, .input = 'u', .output = "ü"},
-    {.accent = PENDING_DIAERESIS, .input = 'U', .output = "Ü"},
-    {.accent = PENDING_DIAERESIS, .input = 'y', .output = "ÿ"},
+    { .accent = PENDING_DIAERESIS, .input = 'a', .output = "ä" },
+    { .accent = PENDING_DIAERESIS, .input = 'A', .output = "Ä" },
+    { .accent = PENDING_DIAERESIS, .input = 'e', .output = "ë" },
+    { .accent = PENDING_DIAERESIS, .input = 'E', .output = "Ë" },
+    { .accent = PENDING_DIAERESIS, .input = 'i', .output = "ï" },
+    { .accent = PENDING_DIAERESIS, .input = 'I', .output = "Ï" },
+    { .accent = PENDING_DIAERESIS, .input = 'o', .output = "ö" },
+    { .accent = PENDING_DIAERESIS, .input = 'O', .output = "Ö" },
+    { .accent = PENDING_DIAERESIS, .input = 'u', .output = "ü" },
+    { .accent = PENDING_DIAERESIS, .input = 'U', .output = "Ü" },
+    { .accent = PENDING_DIAERESIS, .input = 'y', .output = "ÿ" },
 
-    {.accent = PENDING_GRAVE, .input = 'a', .output = "à"},
-    {.accent = PENDING_GRAVE, .input = 'A', .output = "À"},
-    {.accent = PENDING_GRAVE, .input = 'e', .output = "è"},
-    {.accent = PENDING_GRAVE, .input = 'E', .output = "È"},
-    {.accent = PENDING_GRAVE, .input = 'i', .output = "ì"},
-    {.accent = PENDING_GRAVE, .input = 'I', .output = "Ì"},
-    {.accent = PENDING_GRAVE, .input = 'o', .output = "ò"},
-    {.accent = PENDING_GRAVE, .input = 'O', .output = "Ò"},
-    {.accent = PENDING_GRAVE, .input = 'u', .output = "ù"},
-    {.accent = PENDING_GRAVE, .input = 'U', .output = "Ù"},
+    { .accent = PENDING_GRAVE, .input = 'a', .output = "à" },
+    { .accent = PENDING_GRAVE, .input = 'A', .output = "À" },
+    { .accent = PENDING_GRAVE, .input = 'e', .output = "è" },
+    { .accent = PENDING_GRAVE, .input = 'E', .output = "È" },
+    { .accent = PENDING_GRAVE, .input = 'i', .output = "ì" },
+    { .accent = PENDING_GRAVE, .input = 'I', .output = "Ì" },
+    { .accent = PENDING_GRAVE, .input = 'o', .output = "ò" },
+    { .accent = PENDING_GRAVE, .input = 'O', .output = "Ò" },
+    { .accent = PENDING_GRAVE, .input = 'u', .output = "ù" },
+    { .accent = PENDING_GRAVE, .input = 'U', .output = "Ù" },
 
-    {.accent = PENDING_CIRCUMFLEX, .input = 'a', .output = "â"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'A', .output = "Â"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'e', .output = "ê"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'E', .output = "Ê"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'i', .output = "î"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'I', .output = "Î"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'o', .output = "ô"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'O', .output = "Ô"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'u', .output = "û"},
-    {.accent = PENDING_CIRCUMFLEX, .input = 'U', .output = "Û"},
+    { .accent = PENDING_CIRCUMFLEX, .input = 'a', .output = "â" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'A', .output = "Â" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'e', .output = "ê" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'E', .output = "Ê" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'i', .output = "î" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'I', .output = "Î" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'o', .output = "ô" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'O', .output = "Ô" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'u', .output = "û" },
+    { .accent = PENDING_CIRCUMFLEX, .input = 'U', .output = "Û" },
 
-    {.accent = PENDING_TILDE, .input = 'a', .output = "ã"},
-    {.accent = PENDING_TILDE, .input = 'A', .output = "Ã"},
-    {.accent = PENDING_TILDE, .input = 'n', .output = "ñ"},
-    {.accent = PENDING_TILDE, .input = 'N', .output = "Ñ"},
-    {.accent = PENDING_TILDE, .input = 'o', .output = "õ"},
-    {.accent = PENDING_TILDE, .input = 'O', .output = "Õ"},
+    { .accent = PENDING_TILDE, .input = 'a', .output = "ã" },
+    { .accent = PENDING_TILDE, .input = 'A', .output = "Ã" },
+    { .accent = PENDING_TILDE, .input = 'n', .output = "ñ" },
+    { .accent = PENDING_TILDE, .input = 'N', .output = "Ñ" },
+    { .accent = PENDING_TILDE, .input = 'o', .output = "õ" },
+    { .accent = PENDING_TILDE, .input = 'O', .output = "Õ" }
 };
 
 /* Return an unhandled result without commit text. */
@@ -121,31 +125,31 @@ static ComposeResult result_handled(const char* commit)
 }
 
 /*
- * Convert the incoming keyval to a Unicode scalar when it represents printable
+ * Convert the incoming key to a Unicode scalar when it represents printable
  * text.  This accepts ASCII, Latin-1 keysyms, and GDK/IBus Unicode keysyms of
  * the form 0x01000000 + codepoint.
  */
-static gboolean keyval_to_unicode(const guint keyval, gunichar* out_char)
+static gboolean key_to_unicode(const guint key, gunichar* out)
 {
-    if (keyval < 0x80)
+    if (key < 0x80)
     {
-        *out_char = keyval;
+        *out = key;
 
-        return g_unichar_validate(*out_char);
+        return g_unichar_validate(*out);
     }
 
-    if (keyval >= 0x01000100 && keyval <= 0x0110ffff)
+    if (key >= 0x01000100 && key <= 0x0110ffff)
     {
-        *out_char = keyval - 0x01000000;
+        *out = key - 0x01000000;
 
-        return g_unichar_validate(*out_char);
+        return g_unichar_validate(*out);
     }
 
-    if (keyval >= 0x00a0 && keyval <= 0x00ff)
+    if (key >= 0x00a0 && key <= 0x00ff)
     {
-        *out_char = keyval;
+        *out = key;
 
-        return g_unichar_validate(*out_char);
+        return g_unichar_validate(*out);
     }
 
     return FALSE;
@@ -154,16 +158,16 @@ static gboolean keyval_to_unicode(const guint keyval, gunichar* out_char)
 /* Convert one validated Unicode scalar to a newly allocated UTF-8 string. */
 static char* utf8_from_unichar(const gunichar ch)
 {
-    char buffer[7] = {0};
+    char buf[7] = {0};
 
     if (!g_unichar_validate(ch))
         return NULL;
 
-    const int len = g_unichar_to_utf8(ch, buffer);
+    const int len = g_unichar_to_utf8(ch, buf);
 
-    buffer[len] = '\0';
+    buf[len] = '\0';
 
-    return g_strdup(buffer);
+    return g_strdup(buf);
 }
 
 /*
@@ -171,9 +175,9 @@ static char* utf8_from_unichar(const gunichar ch)
  * Ctrl+V, Alt shortcuts, Super shortcuts, etc. are not swallowed by the input
  * method, even if an accent is currently pending.
  */
-static gboolean is_modifier_shortcut(const guint modifiers)
+static gboolean is_modifier_shortcut(const guint mods)
 {
-    return (modifiers & (COMPOSE_MOD_CONTROL | COMPOSE_MOD_ALT | COMPOSE_MOD_SUPER)) != 0;
+    return (mods & (COMPOSE_MOD_CONTROL | COMPOSE_MOD_ALT | COMPOSE_MOD_SUPER)) != 0;
 }
 
 /*
@@ -181,50 +185,55 @@ static gboolean is_modifier_shortcut(const guint modifiers)
  * while an accent is pending, we commit the pending literal but return
  * handled=FALSE so the caller can still deliver the navigation key normally.
  */
-static gboolean is_non_printable_navigation_key(const guint keyval)
+static gboolean is_non_printable_navigation_key(const guint key)
 {
-    return keyval == SC_KEY_DELETE
-        || keyval == SC_KEY_LEFT
-        || keyval == SC_KEY_UP
-        || keyval == SC_KEY_RIGHT
-        || keyval == SC_KEY_DOWN
-        || keyval == SC_KEY_HOME
-        || keyval == SC_KEY_END
-        || keyval == SC_KEY_PAGE_UP
-        || keyval == SC_KEY_PAGE_DOWN
-        || keyval == SC_KEY_INSERT
-        || (keyval >= 0xffbe && keyval <= 0xffe0);
+    return key == SC_KEY_DELETE
+        || key == SC_KEY_LEFT
+        || key == SC_KEY_UP
+        || key == SC_KEY_RIGHT
+        || key == SC_KEY_DOWN
+        || key == SC_KEY_HOME
+        || key == SC_KEY_END
+        || key == SC_KEY_PAGE_UP
+        || key == SC_KEY_PAGE_DOWN
+        || key == SC_KEY_INSERT
+        || (key >= 0xffbe && key <= 0xffe0);
 }
 
 /*
  * Detect the five accent keys handled by this state machine and remember the
  * exact literal character to use for Space, repeated accent, and fallback cases.
  */
-static gboolean pending_from_keyval(const guint keyval, PendingAccent* accent, gunichar* literal)
+static gboolean pending_from_key(const guint key, PendingAccent* accent, gunichar* literal)
 {
-    switch (keyval)
+    switch (key)
     {
         case '\'':
+        case SC_KEY_DEAD_ACUTE:
             *accent = PENDING_ACUTE;
             *literal = '\'';
         return TRUE;
 
         case '"':
+        case SC_KEY_DEAD_DIAERESIS:
             *accent = PENDING_DIAERESIS;
             *literal = '"';
         return TRUE;
 
         case '`':
+        case SC_KEY_DEAD_GRAVE:
             *accent = PENDING_GRAVE;
             *literal = '`';
         return TRUE;
 
         case '^':
+        case SC_KEY_DEAD_CIRCUMFLEX:
             *accent = PENDING_CIRCUMFLEX;
             *literal = '^';
         return TRUE;
 
         case '~':
+        case SC_KEY_DEAD_TILDE:
             *accent = PENDING_TILDE;
             *literal = '~';
         return TRUE;
@@ -301,11 +310,11 @@ gboolean compose_state_is_pending(const ComposeState* state)
  * Process one normalized key event and return whether the caller should consume
  * it, optionally with completed UTF-8 text to commit.
  */
-ComposeResult compose_state_process_key(ComposeState* state, const guint keyval, const guint modifiers)
+ComposeResult compose_state_process_key(ComposeState* state, const guint key, const guint mods)
 {
     g_return_val_if_fail(state != NULL, result_unhandled ());
 
-    if ((modifiers & COMPOSE_MOD_RELEASE) != 0)
+    if ((mods & COMPOSE_MOD_RELEASE) != 0)
         return result_unhandled();
 
     /*
@@ -315,13 +324,13 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
      */
     if (state->pending == PENDING_NONE)
     {
-        if (is_modifier_shortcut(modifiers))
+        if (is_modifier_shortcut(mods))
             return result_unhandled();
 
         gunichar literal;
         PendingAccent accent;
 
-        if (pending_from_keyval(keyval, &accent, &literal))
+        if (pending_from_key(key, &accent, &literal))
         {
             state->pending = accent;
             state->pending_literal = literal;
@@ -337,19 +346,19 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
      * the application does not delete text or receive Escape for a sequence that
      * existed only inside the input method.
      */
-    if (keyval == SC_KEY_ESCAPE || keyval == SC_KEY_BACKSPACE)
+    if (key == SC_KEY_ESCAPE || key == SC_KEY_BACKSPACE)
     {
         compose_state_reset(state);
 
         return result_handled(NULL);
     }
 
-    if (is_modifier_shortcut(modifiers))
+    if (is_modifier_shortcut(mods))
         return result_unhandled();
 
     gunichar input;
 
-    if (keyval_to_unicode(keyval, &input))
+    if (key_to_unicode(key, &input))
     {
         /*
          * Accent + Space means "commit one literal accent". Repeating the same
@@ -398,7 +407,7 @@ ComposeResult compose_state_process_key(ComposeState* state, const guint keyval,
         return result_unhandled();
     }
 
-    if (is_non_printable_navigation_key(keyval))
+    if (is_non_printable_navigation_key(key))
     {
         char* commit = utf8_from_unichar(state->pending_literal);
 
