@@ -21,7 +21,7 @@ static gboolean argument_is_version(const char* arg)
 }
 
 /* Exit the main loop when the session IBus daemon goes away. */
-static void bus_disconnected_cb(IBusBus* disconnected_bus, void* const user_data)
+static void bus_disconnected_cb(IBusBus* unused_bus, void* const data)
 {
     ibus_quit();
 }
@@ -43,6 +43,7 @@ int main(const int argc, char** argv)
     }
 
     setlocale(LC_ALL, "");
+
     ibus_init();
 
     const gboolean debug = g_strcmp0(g_getenv("SILENT_COMPOSE_DEBUG"), "1") == 0;
@@ -60,6 +61,7 @@ int main(const int argc, char** argv)
     g_signal_connect(bus, "disconnected", G_CALLBACK (bus_disconnected_cb), NULL);
 
     factory = ibus_factory_new(ibus_bus_get_connection(bus));
+
     ibus_factory_add_engine(factory, ENGINE_NAME, SC_TYPE_ENGINE);
 
     const guint32 request_name_reply = ibus_bus_request_name(bus, BUS_NAME, 0);
