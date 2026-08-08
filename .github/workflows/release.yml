@@ -306,4 +306,4 @@ jobs:
                     printf '%s\n' "${COPR_CONFIG}" > "${HOME}/.config/copr"
                     chmod 600 "${HOME}/.config/copr"
 
-                    copr-cli build "${COPR_PROJECT}" "${SOURCE_RPM}"
+                    copr-cli build --nowait "${COPR_PROJECT}" "${SOURCE_RPM}"
