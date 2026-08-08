@@ -39,3 +39,12 @@ test(
     meson.project_version(),
   ],
 )
+
+test(
+  'silent-compose-ibus-component',
+  find_program('sh'),
+  args: [
+    files('test-component.sh'),
+    meson.project_build_root() / 'data/org.freedesktop.IBus.SilentCompose.xml',
+  ],
+)

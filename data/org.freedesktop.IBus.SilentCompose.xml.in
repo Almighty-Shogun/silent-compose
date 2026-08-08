@@ -16,6 +16,7 @@
       <author>SilentCompose contributors &lt;silent-compose@localhost&gt;</author>
       <icon>ibus-keyboard</icon>
       <layout>us</layout>
+      <layout_variant>altgr-intl</layout_variant>
       <longname>US, intl. Silent Compose</longname>
       <description>US keyboard with silent international composition</description>
       <rank>80</rank>
