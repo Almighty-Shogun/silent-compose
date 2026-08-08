@@ -1,33 +1,50 @@
-# Meson build directories
-/build/
+# IDE
+.idea/*
+.fleet/*
+.vscode/*
+*.iml
+
+# VS Code extensions
+!.vscode/extensions.json
+
+# Project branding
+!.idea/.name
+!.idea/icon.svg
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+build/
+dist/
+out/
+target/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# AI
+.claude/
+.codex/
+.agents/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
 /buildDir/
 /builddir/
 /build-*/
-
-# Editor / IDE files
-/.idea/
-/.vscode/
-*.swp
-*~
-
-# Compiler and linker outputs
-*.o
-*.so
-*.so.*
-*.a
-
-# Local package/release artifacts
-*.rpm
-*.src.rpm
-*.tar.xz
-*.tar.gz
-*.zip
-/rpmbuild/
-/release-assets/
-/dist/
-
-# Local caches
-/.cache/
-/.pytest_cache/
-/coverage/
-*.log
