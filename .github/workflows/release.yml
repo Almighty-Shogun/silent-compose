@@ -113,8 +113,7 @@ jobs:
                 run: |
                     set -Eeuo pipefail
 
-                    RPM_TOPDIR="$(rpm --eval '%{_topdir}')"
-                    [[ -n "${RPM_TOPDIR}" && "${RPM_TOPDIR}" != "%{_topdir}" ]]
+                    RPM_TOPDIR="${PWD}/build/rpmbuild"
 
                     mkdir -p \
                         "${RPM_TOPDIR}/BUILD" \
@@ -132,7 +131,9 @@ jobs:
                         packaging/fedora/silent-compose.spec.in > build/packaging/silent-compose.spec
 
                     cp -- "${SOURCE_ARCHIVE}" "${RPM_TOPDIR}/SOURCES/"
-                    rpmbuild -ba build/packaging/silent-compose.spec
+                    rpmbuild \
+                        --define "_topdir ${RPM_TOPDIR}" \
+                        -ba build/packaging/silent-compose.spec
 
                     mapfile -t BINARY_RPMS < <(
                         find "${RPM_TOPDIR}/RPMS" \
