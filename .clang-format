@@ -1,0 +1,22 @@
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortIfStatementsOnASingleLine: WithoutElse
+BinPackArguments: false
+BinPackParameters: AlwaysOnePerLine
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterControlStatement: Always
+    AfterEnum: true
+    AfterFunction: true
+    AfterStruct: true
+    AfterUnion: true
+    BeforeElse: true
+    BeforeWhile: true
+ColumnLimit: 135
+IndentCaseLabels: true
+IndentWidth: 4
+PointerAlignment: Left
+TabWidth: 4
+UseTab: Never
+InsertNewlineAtEOF: true
