@@ -6,7 +6,7 @@
   <version>@version@</version>
   <author>SilentCompose contributors &lt;silent-compose@localhost&gt;</author>
   <license>MIT</license>
-  <homepage></homepage>
+  <homepage>https://shogun.ms</homepage>
   <textdomain>silent-compose</textdomain>
   <engines>
     <engine>
