@@ -6,8 +6,7 @@
 
 # Silent Compose
 
-Silent Compose is a Fedora GNOME Wayland input method for silent
-US-International-style composition.
+Silent Compose is an input method for silent US-International-style composition.
 
 ```text
 Press '        -> nothing visible
