@@ -3,6 +3,12 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+/**
+ * Counters and captured text for one input context under test.
+ *
+ * The preedit counters are the actual assertion of this suite: any preedit
+ * signal reaching the client is the failure the module exists to prevent.
+ */
 typedef struct
 {
     guint preedit_start_count;
@@ -12,9 +18,20 @@ typedef struct
     GString* commits;
 } SignalProbe;
 
+/**
+ * Whether GTK managed to initialize a display for this run.
+ *
+ * Headless CI has no display, so every display-dependent test skips instead of
+ * failing when this stays FALSE.
+ */
 static gboolean gtk_available = FALSE;
 
-/* Record committed text emitted by the context under test. */
+/**
+ * Record committed text emitted by the context under test.
+ *
+ * Commits are appended rather than replaced, so a sequence that wrongly emits
+ * two fragments is visible in the comparison.
+ */
 static void probe_commit_cb(GtkIMContext* _, const char* str, void* const data)
 {
     SignalProbe* probe = data;
@@ -24,7 +41,12 @@ static void probe_commit_cb(GtkIMContext* _, const char* str, void* const data)
     g_string_append(probe->commits, str);
 }
 
-/* Count client-visible preedit-start signals. */
+/**
+ * Count client-visible preedit-start signals.
+ *
+ * Any non-zero count means the wrapper leaked a delegated signal to the
+ * application.
+ */
 static void probe_preedit_start_cb(GtkIMContext* _, void* const data)
 {
     SignalProbe* probe = data;
@@ -32,7 +54,12 @@ static void probe_preedit_start_cb(GtkIMContext* _, void* const data)
     probe->preedit_start_count++;
 }
 
-/* Count client-visible preedit-changed signals. */
+/**
+ * Count client-visible preedit-changed signals.
+ *
+ * This is the signal that would draw a pending dead key, so it must never
+ * reach the client.
+ */
 static void probe_preedit_changed_cb(GtkIMContext* _, void* const data)
 {
     SignalProbe* probe = data;
@@ -40,7 +67,12 @@ static void probe_preedit_changed_cb(GtkIMContext* _, void* const data)
     probe->preedit_changed_count++;
 }
 
-/* Count client-visible preedit-end signals. */
+/**
+ * Count client-visible preedit-end signals.
+ *
+ * It is counted alongside the other two so an unbalanced pair cannot pass
+ * unnoticed.
+ */
 static void probe_preedit_end_cb(GtkIMContext* _, void* const data)
 {
     SignalProbe* probe = data;
@@ -48,7 +80,12 @@ static void probe_preedit_end_cb(GtkIMContext* _, void* const data)
     probe->preedit_end_count++;
 }
 
-/* Initialize a signal probe before attaching it to an input context. */
+/**
+ * Initialize a signal probe before attaching it to an input context.
+ *
+ * The whole struct is zeroed so a probe reused across contexts never carries
+ * counts from an earlier one.
+ */
 static void probe_init(SignalProbe* probe)
 {
     memset(probe, 0, sizeof (*probe));
@@ -56,13 +93,23 @@ static void probe_init(SignalProbe* probe)
     probe->commits = g_string_new(NULL);
 }
 
-/* Release dynamic storage owned by a signal probe. */
+/**
+ * Release dynamic storage owned by a signal probe.
+ *
+ * Only the commit string is allocated; the counters live in the caller's own
+ * stack frame.
+ */
 static void probe_clear(const SignalProbe* probe)
 {
     g_string_free(probe->commits, TRUE);
 }
 
-/* Attach commit and preedit counters to the input context under test. */
+/**
+ * Attach commit and preedit counters to the input context under test.
+ *
+ * The probe listens on the wrapper rather than the delegate, which is exactly
+ * what an application would see.
+ */
 static void attach_probe(GtkIMContext* context, SignalProbe* probe)
 {
     g_signal_connect(context, "commit", G_CALLBACK (probe_commit_cb), probe);
@@ -71,7 +118,12 @@ static void attach_probe(GtkIMContext* context, SignalProbe* probe)
     g_signal_connect(context, "preedit-end", G_CALLBACK (probe_preedit_end_cb), probe);
 }
 
-/* Verify the wrapper never exposes visible preedit text. */
+/**
+ * Verify the wrapper never exposes visible preedit text.
+ *
+ * A non-NULL attribute list with an empty string is what satisfies the GTK API
+ * without giving the client anything to draw.
+ */
 static void preedit_string_is_always_empty(void)
 {
     int cursor = -1;
@@ -101,7 +153,12 @@ static void preedit_string_is_always_empty(void)
     g_object_unref(context);
 }
 
-/* Verify lifecycle calls do not emit client-visible preedit signals. */
+/**
+ * Verify lifecycle calls do not emit client-visible preedit signals.
+ *
+ * Focus, reset, and use-preedit changes all reach the delegate, so they are
+ * the most likely way a suppressed signal would escape.
+ */
 static void no_client_preedit_signals_for_lifecycle_calls(void)
 {
     SignalProbe probe;
@@ -132,7 +189,12 @@ static void no_client_preedit_signals_for_lifecycle_calls(void)
     g_object_unref(context);
 }
 
-/* Provide surrounding text when the context requests it. */
+/**
+ * Provide surrounding text when the context requests it.
+ *
+ * It stands in for the application, so the request has to be answered on the
+ * context that emitted it.
+ */
 static gboolean retrieve_surrounding_cb(GtkIMContext* context, void* const _)
 {
     gtk_im_context_set_surrounding_with_selection(context, "abc", -1, 1, 1);
@@ -140,7 +202,12 @@ static gboolean retrieve_surrounding_cb(GtkIMContext* context, void* const _)
     return TRUE;
 }
 
-/* Verify surrounding-text requests round-trip through the wrapper. */
+/**
+ * Verify surrounding-text requests round-trip through the wrapper.
+ *
+ * Both the delegate's request and the client's answer cross the wrapper, so a
+ * missing forward would break input methods that rely on context.
+ */
 static void surrounding_signal_round_trip(void)
 {
     int cursor = -1;
@@ -171,7 +238,12 @@ static void surrounding_signal_round_trip(void)
     g_object_unref(context);
 }
 
-/* Verify input-purpose and input-hints properties round-trip through the wrapper. */
+/**
+ * Verify input-purpose and input-hints properties round-trip through the wrapper.
+ *
+ * The properties are overridden rather than installed, which is where a wrong
+ * property id would surface.
+ */
 static void input_properties_round_trip(void)
 {
     GtkInputHints hints = GTK_INPUT_HINT_NONE;
@@ -197,12 +269,24 @@ static void input_properties_round_trip(void)
     g_object_unref(context);
 }
 
+/**
+ * Display objects needed to synthesize key events.
+ *
+ * GTK's modern filtering API takes a surface and a keyboard device, so both
+ * are captured once and reused across sequences.
+ */
 typedef struct
 {
     GdkDevice* device;
     GdkSurface* surface;
 } KeyTestEnv;
 
+/**
+ * Hardware keycodes used to synthesize key presses.
+ *
+ * GTK expects XKB keycodes, which sit 8 above the evdev numbers, so each entry
+ * carries the offset explicitly rather than hiding it in a constant.
+ */
 enum
 {
     EVDEV_OFFSET = 8,
@@ -222,13 +306,23 @@ enum
     KEY_SPACE = 57 + EVDEV_OFFSET,
 };
 
-/* Send a synthetic key press through GTK's modern key filtering API. */
+/**
+ * Send a synthetic key press through GTK's modern key filtering API.
+ *
+ * Going through gtk_im_context_filter_key() exercises the same entry point a
+ * real widget uses, keycode translation included.
+ */
 static gboolean filter_press(GtkIMContext* context, const KeyTestEnv* env, const guint code, const GdkModifierType state)
 {
     return gtk_im_context_filter_key(context, TRUE, env->surface, env->device, GDK_CURRENT_TIME, code, state, 0);
 }
 
-/* Assert a two-key GTK input sequence emits only the expected commit text. */
+/**
+ * Assert a two-key GTK input sequence emits only the expected commit text.
+ *
+ * Both key presses must be filtered, and all three preedit counters must stay
+ * at zero, so the sequence is checked end to end.
+ */
 static void assert_key_sequence_commit(
     const char* label,
     const KeyTestEnv* env,
@@ -261,7 +355,12 @@ static void assert_key_sequence_commit(
     g_object_unref(context);
 }
 
-/* Run display/layout-dependent end-to-end key filtering checks when enabled. */
+/**
+ * Run display/layout-dependent end-to-end key filtering checks when enabled.
+ *
+ * The results depend on the session's keyboard layout, so the test is opt-in
+ * through SILENT_COMPOSE_RUN_KEY_TESTS and skips without a realized surface.
+ */
 static void key_sequences_on_current_display(void)
 {
     KeyTestEnv env;
@@ -337,7 +436,12 @@ static void key_sequences_on_current_display(void)
     gtk_window_destroy(GTK_WINDOW(window));
 }
 
-/* Move keyboard focus into the manual validation text view after presentation. */
+/**
+ * Move keyboard focus into the manual validation text view after presentation.
+ *
+ * Focus is grabbed from an idle callback because the widget is not realized
+ * yet while the window is being presented.
+ */
 static gboolean focus_text_view_cb(void* const data)
 {
     GtkWidget* text_view = GTK_WIDGET(data);
@@ -347,7 +451,12 @@ static gboolean focus_text_view_cb(void* const data)
     return G_SOURCE_REMOVE;
 }
 
-/* Build the manual validation window used by --manual. */
+/**
+ * Build the manual validation window used by --manual.
+ *
+ * It exists for the checks no automated test can make: whether a pending dead
+ * key is visible on screen while the user types.
+ */
 static void activate_manual_app(GtkApplication* app, void* const _)
 {
     GtkWidget* window = gtk_application_window_new(app);
@@ -381,7 +490,12 @@ static void activate_manual_app(GtkApplication* app, void* const _)
     g_idle_add(focus_text_view_cb, text_view);
 }
 
-/* Run the optional manual validation application. */
+/**
+ * Run the optional manual validation application.
+ *
+ * It replaces the test suite entirely for that run, because a GtkApplication
+ * owns the main loop the tests would otherwise drive.
+ */
 static int run_manual_app(const int argc, char** argv)
 {
     GtkApplication* app = gtk_application_new("dev.silentcompose.ManualTest", G_APPLICATION_DEFAULT_FLAGS);
@@ -395,7 +509,12 @@ static int run_manual_app(const int argc, char** argv)
     return status;
 }
 
-/* Register GTK input-method tests or launch the manual validation app. */
+/**
+ * Register GTK input-method tests or launch the manual validation app.
+ *
+ * --manual is handled before g_test_init() so the option is never consumed by
+ * the test framework.
+ */
 int main(int argc, char** argv)
 {
     for (int i = 1; i < argc; i++)

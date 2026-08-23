@@ -4,11 +4,11 @@
 #include <gmodule.h>
 #include <gtk/gtkimmodule.h>
 
-/*
+/**
  * Modern, prefixed GIO module load entry point.
  *
  * The shared object is named libsilent-compose.so, so GIO looks for
- * g_io_silent_compose_load/query/unload.  These functions must remain exported;
+ * g_io_silent_compose_load/query/unload. These functions must remain exported;
  * making them static breaks module discovery.
  */
 // NOLINTNEXTLINE(misc-use-internal-linkage)
@@ -19,16 +19,20 @@ G_MODULE_EXPORT void g_io_silent_compose_load(GIOModule* module)
     g_io_extension_point_implement(GTK_IM_MODULE_EXTENSION_POINT_NAME, SC_TYPE_IM_CONTEXT, "silent-compose", 10);
 }
 
-/*
- * GIO unload entry point.  The type system owns registered type metadata for
- * the module lifetime, so there is no per-module cleanup here.
+/**
+ * GIO unload entry point.
+ *
+ * The type system owns registered type metadata for the module lifetime, so
+ * there is no per-module cleanup to do here.
  */
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 G_MODULE_EXPORT void g_io_silent_compose_unload(GIOModule* module) {}
 
-/*
- * Tell GIO which extension point this module implements.  GTK then instantiates
- * SC_TYPE_IM_CONTEXT when gtk-im-module=silent-compose is selected.
+/**
+ * Tell GIO which extension point this module implements.
+ *
+ * GTK then instantiates SC_TYPE_IM_CONTEXT once gtk-im-module=silent-compose
+ * is selected.
  */
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 G_MODULE_EXPORT char** g_io_silent_compose_query(void)
@@ -38,19 +42,34 @@ G_MODULE_EXPORT char** g_io_silent_compose_query(void)
     return g_strdupv(extension_points);
 }
 
-/* Legacy, unprefixed wrapper retained for loaders that still probe this name. */
+/**
+ * Legacy, unprefixed load entry point.
+ *
+ * Some loaders still probe the unprefixed names, so the three wrappers stay in
+ * place and forward to the prefixed implementations.
+ */
 G_MODULE_EXPORT void g_io_module_load(GIOModule* module)
 {
     g_io_silent_compose_load(module);
 }
 
-/* Legacy unload wrapper. */
+/**
+ * Legacy unload entry point.
+ *
+ * It exists for loaders that resolved g_io_module_load and expect a matching
+ * teardown symbol next to it.
+ */
 G_MODULE_EXPORT void g_io_module_unload(GIOModule* module)
 {
     g_io_silent_compose_unload(module);
 }
 
-/* Legacy query wrapper. */
+/**
+ * Legacy query entry point.
+ *
+ * It answers with the same extension point list as the prefixed function, so
+ * both discovery paths describe the module identically.
+ */
 G_MODULE_EXPORT char** g_io_module_query(void)
 {
     return g_io_silent_compose_query();

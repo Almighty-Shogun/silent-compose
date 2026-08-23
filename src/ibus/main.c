@@ -7,31 +7,43 @@
 #define ENGINE_NAME "silent-compose"
 #define BUS_NAME "org.freedesktop.IBus.SilentCompose"
 
-/*
- * IBus owns this process lifecycle.  The component XML launches the executable,
+/**
+ * Session bus connection and engine factory owned by this process.
+ *
+ * IBus owns this process lifecycle. The component XML launches the executable,
  * then the process registers one factory for ENGINE_NAME on the session bus.
  */
 static IBusBus* bus = NULL;
 static IBusFactory* factory = NULL;
 
-/* Keep --version cheap and side-effect free for tests and package validation. */
+/**
+ * Report whether the argument asks for the version.
+ *
+ * Keeping --version cheap and side-effect free lets tests and package
+ * validation run it without a session bus or a running ibus-daemon.
+ */
 static gboolean argument_is_version(const char* arg)
 {
     return g_strcmp0(arg, "--version") == 0 || g_strcmp0(arg, "-V") == 0;
 }
 
-/* Exit the main loop when the session IBus daemon goes away. */
+/**
+ * Exit the main loop when the session IBus daemon goes away.
+ *
+ * Quitting instead of reconnecting lets ibus-daemon restart the component the
+ * same way it started it.
+ */
 static void bus_disconnected_cb(IBusBus* unused_bus, void* const data)
 {
     ibus_quit();
 }
 
-/*
+/**
  * Normal startup path for the IBus component executable.
  *
  * The process does not daemonize itself; ibus-daemon starts and supervises it
- * through the installed component XML.  We only request the well-known bus name,
- * register the engine type, and enter ibus_main().
+ * through the installed component XML. Startup only requests the well-known
+ * bus name, registers the engine type, and enters ibus_main().
  */
 int main(const int argc, char** argv)
 {
