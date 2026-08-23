@@ -475,6 +475,27 @@ jobs:
                         --repo "${GITHUB_REPOSITORY}" \
                         --clobber
 
+    draft-on-failure:
+        name: 🧹 Return release to draft on failure
+        runs-on: ubuntu-latest
+        needs: [ fedora, debian, upload ]
+        if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
+
+        env:
+            RELEASE_TAG: ${{ github.event.release.tag_name }}
+            GH_TOKEN: ${{ github.token }}
+
+        steps:
+            -   name: 🧹 Unpublish the incomplete release
+                run: |
+                    set -Eeuo pipefail
+
+                    echo "::warning title=Release returned to draft::${RELEASE_TAG} did not build cleanly and was unpublished."
+
+                    gh release edit "${RELEASE_TAG}" \
+                        --draft \
+                        --repo "${GITHUB_REPOSITORY}"
+
     copr:
         name: 🚀 Publish COPR build
         runs-on: ubuntu-latest
