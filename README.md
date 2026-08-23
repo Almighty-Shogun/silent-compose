@@ -17,7 +17,7 @@ Then press e   -> é
 The pending accent stays private. Applications only receive the final committed
 text.
 
-## Supported
+## 💻 Supported
 
 - Fedora Workstation 44
 - GNOME Wayland
@@ -27,7 +27,7 @@ text.
 
 Verified in Brave native Wayland, Electron apps, JetBrains IDEs, and GTK 4 apps.
 
-## Features
+## ✨ Features
 
 - GNOME input source: `English (US, intl. Silent Compose)`
 - IBus backend for system-wide Wayland use
@@ -37,7 +37,7 @@ Verified in Brave native Wayland, Electron apps, JetBrains IDEs, and GTK 4 apps.
 - No X11 wrapper
 - Shortcuts such as Ctrl+C, Ctrl+V, Alt, and Super still pass through
 
-## Examples
+### Examples
 
 | First key | Second key | Output |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ etc...
 Unsupported printable sequences preserve input. Example: `'` then `t` commits
 `'t`.
 
-## Install / uninstall
+## 🚀 Installation
 
 ### COPR repository
 
@@ -142,7 +142,7 @@ Uninstall:
 sudo dnf remove silent-compose
 ```
 
-## Build
+## 🔧 Build
 
 Install build dependencies:
 
@@ -163,7 +163,7 @@ use the development fallback version `0.0.0`.
 
 Fedora RPMs are produced by the GitHub release workflow.
 
-## Files installed
+### Files installed
 
 Typical Fedora paths:
 
@@ -176,7 +176,7 @@ Typical Fedora paths:
 The package does not modify GNOME settings, keyboard layouts, or application
 launchers.
 
-## Debugging
+## 🩺 Debugging
 
 ```bash
 SILENT_COMPOSE_DEBUG=1
