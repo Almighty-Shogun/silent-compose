@@ -19,10 +19,13 @@ text.
 
 ## 💻 Supported
 
-- Fedora Workstation 44
+- Fedora Workstation 44, packaged as an RPM
+- Fedora Atomic variants, layered with `rpm-ostree`
+- Debian 12 and Ubuntu 22.04 or newer, packaged as a `.deb`
+- Other x86_64 distributions, through the generic `.run` installer
 - GNOME Wayland
-- IBus
-- GTK 4
+- IBus 1.5 or newer
+- GTK 4.2 or newer
 - x86_64
 
 Verified in Brave native Wayland, Electron apps, JetBrains IDEs, and GTK 4 apps.
@@ -65,44 +68,68 @@ Unsupported printable sequences preserve input. Example: `'` then `t` commits
 
 ## 🚀 Installation
 
-### COPR repository
-
-Install from the COPR repository:
-
+### Fedora Workstation, COPR repository
 ```bash
 sudo dnf install dnf-plugins-core
 sudo dnf copr enable almighty-shogun/silent-compose
 sudo dnf install silent-compose
-```
 
-Then updates arrive through normal Fedora package upgrades:
-
-```bash
-sudo dnf upgrade silent-compose
-```
-
-Regular system upgrades also update Silent Compose when a newer COPR build is
-available:
-
-```bash
-sudo dnf upgrade -y
-```
-
-After an update, restart the GNOME IBus user service or log out and back in so
-GNOME loads the updated engine process.
-
-```bash
 systemctl --user restart org.freedesktop.IBus.session.GNOME.service
 ```
 
-### Github
-
-Download and install a release RPM directly:
+### Fedora Atomic, COPR repository
+Silverblue, Kinoite, Bazzite, Aurora, and other ostree-based variants layer the
+same RPM. They do not all ship `dnf`, so add the COPR repository by writing its
+repo file directly:
 
 ```bash
-curl -LO "https://github.com/Almighty-Shogun/silent-compose/releases/latest/download/silent-compose.fc44.rpm"
-sudo dnf install ./silent-compose.fc44.rpm
+sudo curl -o /etc/yum.repos.d/almighty-shogun-silent-compose.repo \
+    "https://copr.fedorainfracloud.org/coprs/almighty-shogun/silent-compose/repo/fedora-$(rpm -E %fedora)/almighty-shogun-silent-compose-fedora-$(rpm -E %fedora).repo"
+sudo rpm-ostree install silent-compose
+systemctl reboot
 ```
+
+Updates arrive with your normal system upgrade: `sudo dnf upgrade` on Fedora Workstation, or `sudo rpm-ostree upgrade` followed by a reboot on Fedora Atomic.
+On Workstation, restart IBus or log out afterwards so the new engine loads.
+
+### Debian and Ubuntu
+
+Download and install the release package:
+
+```bash
+curl -LO "https://github.com/Almighty-Shogun/silent-compose/releases/latest/download/silent-compose.deb"
+sudo apt install ./silent-compose.deb
+```
+
+`apt` pulls in `ibus` and the GTK 4 runtime if they are missing. The package
+refreshes the GTK 4 module cache and the IBus registry on install.
+
+### Other distributions
+
+The `.run` installer carries prebuilt x86_64 binaries and works on any
+distribution with glibc 2.36 or newer, GTK 4.2 or newer, and IBus 1.5 or newer.
+It detects the GTK 4 IM module directory for the host, which differs between
+distributions, and installs under `/usr`.
+
+> [!NOTE]
+> The `.run` installer refuses to run on atomic systems, because `/usr` is
+read-only there. Layer the RPM with `rpm-ostree` instead.
+
+```bash
+curl -LO "https://github.com/Almighty-Shogun/silent-compose/releases/latest/download/silent-compose.run"
+chmod +x silent-compose.run
+sudo ./silent-compose.run
+```
+
+Show where the GTK 4 module would be installed, without installing anything:
+
+```bash
+./silent-compose.run --print-immodules-dir
+```
+
+Pass `--immodules-dir DIR` when detection picks the wrong directory.
+
+### Selecting the input source
 
 Restart the GNOME IBus user service so GNOME can see the newly installed engine:
 
@@ -135,20 +162,39 @@ silent-compose
 
 If the engine still does not appear, log out and back in.
 
-
-Uninstall:
+## 🧹 Uninstall
 
 ```bash
+# Fedora
 sudo dnf remove silent-compose
+
+# Fedora Atomic
+sudo rpm-ostree uninstall silent-compose
+systemctl reboot
+
+# Debian/Ubuntu
+sudo apt remove silent-compose
+
+# Generic
+sudo ./silent-compose.run --uninstall
 ```
 
 ## 🔧 Build
 
-Install build dependencies:
+Install build dependencies on Fedora:
 
 ```bash
 sudo dnf install gcc meson ninja-build pkgconf-pkg-config gtk4-devel glib2-devel ibus-devel
 ```
+
+Install build dependencies on Debian and Ubuntu:
+
+```bash
+sudo apt install gcc meson ninja-build pkg-config libgtk-4-dev libglib2.0-dev libibus-1.0-dev
+```
+
+Meson 1.2.0 or newer is required. Debian 12 ships 1.0.1, so install a newer
+Meson with `pip3 install --break-system-packages "meson>=1.2.0"` there.
 
 Build:
 
@@ -161,7 +207,9 @@ meson test -C build --print-errorlogs
 Release versions come from plain Git tags such as `0.2.0`. Untagged local builds
 use the development fallback version `0.0.0`.
 
-Fedora RPMs are produced by the GitHub release workflow.
+Fedora RPMs, Debian packages, and the generic `.run` installer are produced by
+the GitHub release workflow. Packaging inputs live under `packaging/fedora`,
+`packaging/debian`, and `packaging/run`.
 
 ### Files installed
 
@@ -172,6 +220,17 @@ Typical Fedora paths:
 /usr/libexec/silent-compose-ibus
 /usr/share/ibus/component/org.freedesktop.IBus.SilentCompose.xml
 ```
+
+Typical Debian and Ubuntu paths:
+
+```text
+/usr/lib/x86_64-linux-gnu/gtk-4.0/immodules/libsilent-compose.so
+/usr/libexec/silent-compose-ibus
+/usr/share/ibus/component/org.freedesktop.IBus.SilentCompose.xml
+```
+
+Only the GTK 4 module directory differs between distributions. It is taken from
+`gtk4.pc`, so it follows whatever layout the host uses.
 
 The package does not modify GNOME settings, keyboard layouts, or application
 launchers.
