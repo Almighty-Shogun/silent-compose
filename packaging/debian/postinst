@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+immodules_dir=""
+module_path=$(
+    find /usr/lib -path '*/gtk-4.0/immodules/libsilent-compose.so' -print -quit 2>/dev/null || true
+)
+
+if [ -n "${module_path}" ]; then
+    immodules_dir=$(dirname "${module_path}")
+fi
+
+if [ -n "${immodules_dir}" ]; then
+    if command -v gio-querymodules >/dev/null 2>&1; then
+        gio-querymodules "${immodules_dir}" || true
+    elif command -v gio-querymodules-64 >/dev/null 2>&1; then
+        gio-querymodules-64 "${immodules_dir}" || true
+    fi
+fi
+
+touch /usr/share/ibus/component/org.freedesktop.IBus.SilentCompose.xml || true
+
+if command -v ibus >/dev/null 2>&1; then
+    ibus write-cache --system >/dev/null 2>&1 || true
+fi
+
+exit 0

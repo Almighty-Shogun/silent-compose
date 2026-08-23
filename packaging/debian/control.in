@@ -1,0 +1,14 @@
+Package: silent-compose
+Version: @VERSION@-@DEB_RELEASE@
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Almighty Shogun <alm1ghtyshogun1998@gmail.com>
+Installed-Size: @INSTALLED_SIZE@
+Depends: libc6, libglib2.0-0, libgtk-4-1 (>= 4.2), ibus (>= 1.5.0)
+Homepage: https://shogun.ms
+Description: Silent Compose input method for GTK 4 and IBus
+ Silent Compose provides silent Windows-style US International composition. It
+ includes a GTK 4 input-method module and an IBus engine named
+ US, intl. Silent Compose. Pending accent keys are kept private and only final
+ UTF-8 text is committed.
