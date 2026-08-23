@@ -61,5 +61,5 @@ touch %{_datadir}/ibus/component/org.freedesktop.IBus.SilentCompose.xml || :
 %{_datadir}/ibus/component/org.freedesktop.IBus.SilentCompose.xml
 
 %changelog
-* @RPM_CHANGELOG_DATE@ SilentCompose contributors <silent-compose@localhost> - @VERSION@-@RPM_RELEASE@
+* @RPM_CHANGELOG_DATE@ SilentCompose contributors <alm1ghtyshogun1998@gmail.com> - @VERSION@-@RPM_RELEASE@
 - Build Silent Compose release @VERSION@.
