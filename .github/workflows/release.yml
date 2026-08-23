@@ -125,7 +125,7 @@ jobs:
                         -e "s/@VERSION@/${VERSION}/g" \
                         -e "s/@RPM_RELEASE@/${RPM_RELEASE}/g" \
                         -e "s/@RPM_CHANGELOG_DATE@/$(LC_ALL=C date -u '+%a %b %d %Y')/g" \
-                        packaging/silent-compose.spec.in > build/packaging/silent-compose.spec
+                        packaging/fedora/silent-compose.spec.in > build/packaging/silent-compose.spec
 
                     cp -- "${SOURCE_ARCHIVE}" "${RPM_TOPDIR}/SOURCES/"
                     rpmbuild -ba build/packaging/silent-compose.spec
