@@ -92,6 +92,7 @@ endif
 
 gio_querymodules = find_program(
     'gio-querymodules-' + gio_querymodules_bits,
+    'gio-querymodules',
     required : false,
 )
 
@@ -102,5 +103,5 @@ if gio_querymodules.found()
         skip_if_destdir : true,
     )
 else
-    warning('gio-querymodules-' + gio_querymodules_bits + ' not found; direct installs will not regenerate the GTK 4 IM module cache.')
+    warning('gio-querymodules-' + gio_querymodules_bits + ' and gio-querymodules not found; direct installs will not regenerate the GTK 4 IM module cache.')
 endif
