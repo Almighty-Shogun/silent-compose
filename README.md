@@ -139,7 +139,7 @@ systemctl --user restart org.freedesktop.IBus.session.GNOME.service
 Then select Silent Compose in GNOME Settings:
 
 ```text
-Settings -> Keyboard -> Input Sources -> English (US, intl. Silent Compose)
+Settings -> Keyboard -> Input Sources -> English (United States) -> English (US, intl. Silent Compose)
 ```
 
 Use `English (US, intl. Silent Compose)`, not GNOME's built-in
